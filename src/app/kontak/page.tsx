@@ -38,6 +38,24 @@ export default function KontakPage() {
           />
         </div>
 
+        {/* VEKTOR DEKORASI DARI ASET ANDA */}
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-visible">
+          <Image
+            src="/assets/vector-15.png"
+            alt=""
+            width={180}
+            height={180}
+            className="absolute top-[18%] right-[9%]"
+          />
+          <Image
+            src="/assets/vector-1.png"
+            alt=""
+            width={100}
+            height={50}
+            className="absolute top-[75%] left-[4%]"
+          />
+        </div>
+
         <section className="relative z-10 max-w-6xl mx-auto px-4">
           {/* HEADER */}
           <header className="mb-16 text-center">

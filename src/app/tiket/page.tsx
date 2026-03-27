@@ -99,6 +99,38 @@ export default function TiketPage() {
           />
         </div>
 
+        {/* VEKTOR DEKORASI DARI ASET ANDA */}
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-visible">
+          <Image
+            src="/assets/vector-1.png"
+            alt=""
+            width={100}
+            height={100}
+            className="absolute top-[15%] right-[13%] rotate-180 scale-x-[-1]"
+          />
+          <Image
+            src="/assets/vector-10.png"
+            alt=""
+            width={150}
+            height={150}
+            className="absolute top-[19%] right-[8%]"
+          />
+          <Image
+            src="/assets/vector-1.png"
+            alt=""
+            width={100}
+            height={50}
+            className="absolute top-[45%] left-[2%]"
+          />
+          <Image
+            src="/assets/vector-17.png"
+            alt=""
+            width={250}
+            height={1125}
+            className="absolute bottom-[-3%] right-[5%]"
+          />
+        </div>
+
         <section className="relative z-10 max-w-7xl mx-auto px-4">
           {/* Header Section */}
           <div className="text-center mb-10">

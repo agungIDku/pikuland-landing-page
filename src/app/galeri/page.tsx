@@ -57,21 +57,33 @@ export default function GaleriPage() {
 
         {/* VEKTOR DEKORASI DARI ASET ANDA */}
         <div className="absolute inset-0 pointer-events-none z-0 overflow-visible">
-          {/* Vektor Bintang (biasanya di kanan atas grid) */}
           <Image
-            src="/assets/vector-2.png"
+            src="/assets/vector-16.png"
             alt=""
-            width={120}
-            height={120}
-            className="absolute top-[20%] right-[5%] md:right-[10%] animate-pulse"
+            width={180}
+            height={180}
+            className="absolute top-[20%] right-[3.5%]"
           />
-          {/* Vektor Squiggle (biasanya di kiri tengah) */}
           <Image
-            src="/assets/vector-3.png"
+            src="/assets/vector-1.png"
             alt=""
             width={100}
             height={50}
-            className="absolute top-[45%] left-[-2%] opacity-80"
+            className="absolute top-[75%] left-[4%]"
+          />
+          <Image
+            src="/assets/vector-11.png"
+            alt=""
+            width={100}
+            height={50}
+            className="absolute bottom-[-1%] right-[20%] rotate-90 transform scale-x-[-1]"
+          />
+          <Image
+            src="/assets/vector-11.png"
+            alt=""
+            width={100}
+            height={50}
+            className="absolute bottom-[-1%] left-[20%] rotate-280"
           />
         </div>
 

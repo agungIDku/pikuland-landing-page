@@ -81,6 +81,38 @@ export default function KarirPage() {
           />
         </div>
 
+        {/* VEKTOR DEKORASI DARI ASET ANDA */}
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-visible">
+          <Image
+            src="/assets/vector-16.png"
+            alt=""
+            width={180}
+            height={180}
+            className="absolute top-[5%] right-[3.5%]"
+          />
+          <Image
+            src="/assets/vector-1.png"
+            alt=""
+            width={100}
+            height={50}
+            className="absolute top-[35%] left-[4%]"
+          />
+          <Image
+            src="/assets/vector-11.png"
+            alt=""
+            width={100}
+            height={50}
+            className="absolute bottom-[35%] right-[13%]"
+          />
+          <Image
+            src="/assets/vector-11.png"
+            alt=""
+            width={100}
+            height={50}
+            className="absolute bottom-[35%] left-[13%] rotate-180"
+          />
+        </div>
+
         <section className="relative z-10 max-w-6xl mx-auto px-4">
           {/* HEADER */}
           <header className="mb-16 text-center flex flex-col items-center">
