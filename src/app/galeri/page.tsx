@@ -62,14 +62,14 @@ export default function GaleriPage() {
             alt=""
             width={180}
             height={180}
-            className="absolute top-[20%] right-[3.5%]"
+            className="absolute top-[20%] right-[3.5%] md:top-[80%] md:right-[3.5%]"
           />
           <Image
             src="/assets/vector-1.png"
             alt=""
             width={100}
             height={50}
-            className="absolute top-[75%] left-[4%]"
+            className="absolute top-[75%] left-[4%] md:top-[100%] md:left-[100%]"
           />
           <Image
             src="/assets/vector-11.png"

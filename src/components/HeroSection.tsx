@@ -1,15 +1,27 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export default function HeroSection() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
   return (
     <section className="relative overflow-hidden">
       {/* === TOP WRAPPER: Membungkus background dan wave sehingga foto background terpotong tepat pada Wave bounding box === */}
-      <div className="relative w-full overflow-hidden flex flex-col">
+      <div className="relative w-full min-h-screen md:min-h-0 overflow-hidden flex flex-col">
         {/* ===== Hero Background ===== */}
         <div className="absolute inset-0 z-0 bg-[#E1F5FE] pointer-events-none">
           <Image
-            src="/assets/hero-background.png"
+          src={isMobile ? "/assets/petualangan-tak-terbatas.png" : "/assets/hero-background.png"}
           alt="Pikuland playground background"
           fill
           sizes="100vw"
@@ -23,10 +35,10 @@ export default function HeroSection() {
 
       {/* ===== Hero Content ===== */}
       {/* Konten teks pahlawan dipisahkan dari video agar wave dapat diselipkan di tengah */}
-      <div className="relative z-20 flex flex-col items-center text-center pt-24 sm:pt-32 md:pt-40 lg:pt-48 px-4">
+      <div className="relative z-20 flex flex-col items-center text-center pt-44 sm:pt-32 md:pt-40 lg:pt-48 px-4 flex-1 md:flex-none">
         {/* H1 — Playful Typography */}
-        <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-5xl xl:text-6xl font-black text-white leading-tight md:leading-[1.1] max-w-3xl drop-shadow-md text-center">
-          Dunia Imajinasi <br className="hidden sm:block" />
+        <h1 className="text-5xl sm:text-6xl lg:text-5xl xl:text-6xl font-black text-white leading-tight md:leading-[1.1] max-w-3xl drop-shadow-md text-center mx-auto">
+          Dunia Imajinasi <br className="hidden" />
           <span className="text-[#FFCB05]">Si Kecil</span> Dimulai di Sini!
         </h1>
 
@@ -49,7 +61,7 @@ export default function HeroSection() {
       </div>
 
       {/* ===== Wave Container Image ===== */}
-      <div className="relative z-10 w-full pointer-events-none mt-4 md:mt-8 flex flex-col justify-end">
+      <div className="relative z-10 w-full pointer-events-none mt-auto md:mt-8 flex flex-col justify-end">
         <Image 
           src="/assets/wave.png" 
           alt="Wave Border" 
@@ -67,10 +79,14 @@ export default function HeroSection() {
       <div className="relative -mt-10 sm:-mt-16 md:-mt-20 lg:-mt-24 w-full max-w-[650px] mx-auto z-20 px-4 mb-20 lg:mb-32">
         <div className="absolute inset-0 pointer-events-none z-0">
           {/* Decorative Vectors Hero */}
-          <Image src="/assets/vector-1.png" alt="" width={80} height={40} className="absolute top-[40%] -left-65 sm:block" />
-          <Image src="/assets/vector-15.png" alt="" width={100} height={100} className="absolute -bottom-2 -left-8" />
-          <Image src="/assets/vector-11.png" alt="" width={80} height={80} className="absolute top-[60%] -right-15 sm:block" />
-          <Image src="/assets/vector-10.png" alt="" width={90} height={40} className="absolute top-[40%] -right-12 sm:block" />
+          {/* vector-1: kiri tengah — mobile: disembunyikan karena terlalu jauh */}
+          <Image src="/assets/vector-1.png" alt="" width={80} height={40} className="absolute hidden sm:block top-[40%] -left-65" />
+          {/* vector-15: kiri bawah — mobile: kecil di pojok kiri bawah */}
+          <Image src="/assets/vector-15.png" alt="" width={100} height={100} className="absolute -bottom-2 -left-2 w-12 h-12 sm:w-[100px] sm:h-[100px] sm:-left-8" />
+          {/* vector-11: kanan bawah — mobile: kecil di pojok kanan bawah */}
+          <Image src="/assets/vector-11.png" alt="" width={80} height={80} className="absolute top-[60%] -right-4 w-10 h-10 sm:w-[80px] sm:h-[80px] sm:-right-15" />
+          {/* vector-10: kanan tengah — mobile: disembunyikan karena terlalu jauh */}
+          <Image src="/assets/vector-10.png" alt="" width={90} height={40} className="absolute hidden sm:block top-[40%] -right-12" />
         </div>
 
         <div className="relative border-[12px] md:border-[16px] border-white rounded-[1.5rem] md:rounded-[2rem] overflow-hidden shadow-xl bg-white aspect-video z-10">

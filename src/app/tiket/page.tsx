@@ -154,7 +154,7 @@ export default function TiketPage() {
                   {step > 1 ? <Check size={14} /> : "1"}
                 </span>
                 <span
-                  className={`text-sm font-bold ${step >= 1 ? "text-[#E5007E]" : "text-slate-400"}`}
+                  className={`hidden sm:inline text-sm font-bold ${step >= 1 ? "text-[#E5007E]" : "text-slate-400"}`}
                 >
                   Pilih Tiket
                 </span>
@@ -169,7 +169,7 @@ export default function TiketPage() {
                   {step > 2 ? <Check size={14} /> : "2"}
                 </span>
                 <span
-                  className={`text-sm font-bold ${step >= 2 ? "text-[#E5007E]" : "text-slate-400"}`}
+                  className={`hidden sm:inline text-sm font-bold ${step >= 2 ? "text-[#E5007E]" : "text-slate-400"}`}
                 >
                   Tanggal
                 </span>
@@ -184,7 +184,7 @@ export default function TiketPage() {
                   3
                 </span>
                 <span
-                  className={`text-sm font-bold ${step === 3 ? "text-[#E5007E]" : "text-slate-400"}`}
+                  className={`hidden sm:inline text-sm font-bold ${step === 3 ? "text-[#E5007E]" : "text-slate-400"}`}
                 >
                   Bayar
                 </span>

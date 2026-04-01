@@ -17,9 +17,9 @@ export default function Footer() {
   return (
     <footer className="bg-[#121926] text-white pt-16 md:pt-24 pb-8 md:pb-12 px-6">
       <div className="max-w-6xl mx-auto">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 md:gap-8 pb-10 md:pb-16 border-b border-white/5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-0 sm:gap-12 md:gap-8 pb-10 md:pb-16 border-b border-white/10">
           {/* Brand column — full width on mobile */}
-          <div className="col-span-2 lg:col-span-1">
+          <div className="col-span-2 lg:col-span-1 pb-8 sm:pb-0 border-b border-white/10 sm:border-none">
             <Image
               src="/assets/logo-pikuland.png"
               alt="Pikuland Logo"
@@ -27,11 +27,11 @@ export default function Footer() {
               height={60}
               className="h-10 md:h-12 w-auto"
             />
-            <p className="mt-6 text-sm text-gray-400 leading-relaxed max-w-xs font-medium">
+            <p className="mt-4 text-sm text-gray-400 leading-relaxed max-w-xs font-medium">
               Taman bermain peran edukatif pertama di Indonesia untuk anak usia 2–14 tahun.
             </p>
             {/* Social icons */}
-            <div className="mt-8 flex gap-4">
+            <div className="mt-6 flex gap-3">
               {["instagram", "facebook", "youtube"].map((social) => (
                 <a
                   key={social}
@@ -46,8 +46,8 @@ export default function Footer() {
           </div>
 
           {/* Jelajahi */}
-          <div>
-            <h3 className="font-extrabold text-base mb-6">Jelajahi</h3>
+          <div className="py-8 sm:py-0 border-b border-white/10 sm:border-none">
+            <h3 className="font-extrabold text-base mb-5">Jelajahi</h3>
             <ul className="space-y-4">
               {footerLinks.jelajahi.map((link) => (
                 <li key={link.href}>
@@ -63,8 +63,8 @@ export default function Footer() {
           </div>
 
           {/* Info Penting */}
-          <div>
-            <h3 className="font-extrabold text-base mb-6">Info Penting</h3>
+          <div className="py-8 sm:py-0 border-b border-white/10 sm:border-none">
+            <h3 className="font-extrabold text-base mb-5">Info Penting</h3>
             <ul className="space-y-4">
               {footerLinks.infoPenting.map((link) => (
                 <li key={link.href}>
@@ -80,8 +80,8 @@ export default function Footer() {
           </div>
 
           {/* Hubungi Kami */}
-          <div className="col-span-1">
-            <h3 className="font-extrabold text-base mb-6">Hubungi Kami</h3>
+          <div className="col-span-1 pt-8 sm:pt-0">
+            <h3 className="font-extrabold text-base mb-5">Hubungi Kami</h3>
             <ul className="space-y-4 text-sm text-gray-400">
               <li>Jl. Ceria No. 123, Jakarta Selatan</li>
               <li>halo@pikuland.com</li>
@@ -91,7 +91,7 @@ export default function Footer() {
               href="https://wa.me/62215550123"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-8 inline-flex items-center justify-center bg-[#00A1E4] text-white font-bold text-sm px-8 py-3 rounded-full hover:bg-[#008AC4] transition-colors"
+              className="mt-6 flex items-center justify-center w-full sm:w-auto sm:inline-flex bg-[#00A1E4] text-white font-bold text-sm px-8 py-3.5 rounded-full hover:bg-[#008AC4] transition-colors"
             >
               Hubungi WhatsApp
             </a>
