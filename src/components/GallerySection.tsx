@@ -1,5 +1,7 @@
 import Image from "next/image";
 
+const DEFAULT_GALLERY_TITLE = "Lihat Keseruan Anak di Pikuland";
+
 const galleryImages = [
   { src: "/assets/petualangan-tak-terbatas.png", alt: "Anak bermain di area petualangan Pikuland" },
   { src: "/assets/kolam-bola-raksasa.png", alt: "Kolam bola warna-warni Pikuland" },
@@ -7,7 +9,13 @@ const galleryImages = [
   { src: "/assets/gameplay-preview.png", alt: "Taman bermain Pikuland" },
 ];
 
-export default function GallerySection() {
+type GallerySectionProps = {
+  galleryTitle?: string;
+};
+
+export default function GallerySection({ galleryTitle }: GallerySectionProps) {
+  const title = galleryTitle ?? DEFAULT_GALLERY_TITLE;
+
   return (
     <section className="relative py-16 md:py-20 px-4 bg-[#E1F5FE] overflow-visible">
       
@@ -21,7 +29,7 @@ export default function GallerySection() {
       <div className="relative max-w-6xl mx-auto z-10">
         {/* Section heading */}
         <h2 className="text-center text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-blue-dark mb-8 md:mb-12">
-          Lihat Keseruan Anak di Pikuland
+          {title}
         </h2>
 
         {/* Gallery grid — 3 columns bento-style (Tall left, 2 stacked middle, Tall right) */}

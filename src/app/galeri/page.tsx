@@ -1,7 +1,5 @@
 "use client";
 
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import Image from "next/image";
 import { useState } from "react";
 
@@ -43,7 +41,6 @@ export default function GaleriPage() {
   //     : images.filter((img) => img.category === activeTab);
   return (
     <>
-      <Navbar />
       <main className="relative min-h-screen bg-[#FFFBE6] pt-32 pb-24 overflow-hidden">
         {/* BACKGROUND UTAMA - TIDAK DIHAPUS */}
         <div className="absolute inset-0 pointer-events-none opacity-40 z-0">
@@ -158,7 +155,6 @@ export default function GaleriPage() {
           </div>
         </section>
       </main>
-      <Footer />
     </>
   );
 }

@@ -1,7 +1,5 @@
 "use client";
 
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import Image from "next/image";
 import { useState } from "react";
 import {
@@ -87,7 +85,6 @@ export default function TiketPage() {
 
   return (
     <>
-      <Navbar />
       <main className="relative min-h-screen bg-[#FFFBE6] pt-28 pb-16 overflow-hidden">
         {/* Background (diabaikan sesuai permintaan, tapi dipertahankan strukturnya) */}
         <div className="absolute inset-0 pointer-events-none opacity-30 z-0">
@@ -406,7 +403,6 @@ export default function TiketPage() {
           )}
         </section>
       </main>
-      <Footer />
     </>
   );
 }

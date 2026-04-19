@@ -1,7 +1,5 @@
 "use client";
 
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import Image from "next/image";
 import { Smile, Heart, BookOpen, ChevronDown } from "lucide-react";
 
@@ -69,7 +67,6 @@ const jobs = [
 export default function KarirPage() {
   return (
     <>
-      <Navbar />
       <main className="relative min-h-screen bg-[#FFFDF0] pt-28 pb-24 overflow-hidden">
         {/* Background & Vector (Diabaikan sesuai instruksi) */}
         <div className="absolute inset-0 pointer-events-none opacity-30 z-0">
@@ -228,7 +225,6 @@ export default function KarirPage() {
           </div>
         </section>
       </main>
-      <Footer />
     </>
   );
 }

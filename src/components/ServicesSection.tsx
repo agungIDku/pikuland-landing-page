@@ -1,5 +1,12 @@
+import type { HomeRideContent } from "@/types/homeContent";
 import Image from "next/image";
 import Link from "next/link";
+
+const DEFAULT_RIDE: HomeRideContent = {
+  buttonSeeAllRides: "Lihat Semua Wahana",
+  preTitle: "WAHANA SERU",
+  title: "Petualangan Tanpa Batas",
+};
 
 const services = [
   {
@@ -28,7 +35,13 @@ const services = [
   },
 ];
 
-export default function ServicesSection() {
+type ServicesSectionProps = {
+  rideContent?: HomeRideContent;
+};
+
+export default function ServicesSection({ rideContent }: ServicesSectionProps) {
+  const ride = rideContent ?? DEFAULT_RIDE;
+
   return (
     <section className="relative py-16 md:py-20 px-4 bg-transparent overflow-visible">
       {/* Background lines is now controlled by the parent wrapper in page.tsx */}
@@ -43,10 +56,10 @@ export default function ServicesSection() {
         {/* Section header */}
         <div className="text-center mb-10 md:mb-12">
           <span className="text-[#E5007E] font-extrabold text-sm tracking-[0.2em] uppercase">
-            Wahana Seru
+            {ride.preTitle}
           </span>
           <h2 className="mt-2 text-3xl sm:text-4xl md:text-5xl font-black text-[#263238]">
-            Petualangan Tanpa Batas
+            {ride.title}
           </h2>
         </div>
 
@@ -96,7 +109,7 @@ export default function ServicesSection() {
             href="/tiket"
             className="inline-flex items-center justify-center bg-[#009FE3] text-white font-extrabold text-sm md:text-base px-8 py-3.5 rounded-full hover:bg-[#009FE3]/90 transition-all hover:scale-105 shadow-md"
           >
-            Lihat Semua Wahana
+            {ride.buttonSeeAllRides}
             <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
             </svg>

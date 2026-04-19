@@ -1,31 +1,43 @@
+import type {
+  HomeTestimonialContent,
+  HomeTestimonialItem,
+} from "@/types/homeContent";
 import Image from "next/image";
 
-const testimonials = [
+const FALLBACK_TESTIMONIALS: HomeTestimonialItem[] = [
   {
     name: "Bunda Sarah",
     role: "Ibu dari 2 anak",
-    quote:
+    testimonial:
       "Tempat bermain paling bersih dan aman di Jakarta! Anak-anak saya betah banget seharian di sini.",
-    rating: 5,
-    avatarColor: "bg-[#E5007E]",
+    star: 5,
+    imageUrl: "",
   },
   {
     name: "Pak Budi",
     role: "Ayah si kembar",
-    quote:
+    testimonial:
       "Konsep edukasinya dapet banget. Gak cuma lari-larian, tapi anak belajar profesi dan sosialisasi.",
-    rating: 5,
-    avatarColor: "bg-[#009FE3]",
+    star: 5,
+    imageUrl: "",
   },
   {
     name: "Ibu Dian",
     role: "Guru TK Bintang",
-    quote:
+    testimonial:
       "Sangat rekomended untuk field trip sekolah. Fasilitas lengkap dan kakak pendampingnya ramah-ramah.",
-    rating: 5,
-    avatarColor: "bg-[#FFCB05]",
+    star: 5,
+    imageUrl: "",
   },
 ];
+
+const AVATAR_FALLBACK_COLORS = [
+  "bg-[#E5007E]",
+  "bg-[#009FE3]",
+  "bg-[#FFCB05]",
+] as const;
+
+const DEFAULT_SECTION_TITLE = "Apa Kata Mereka?";
 
 function StarRating({ count }: { count: number }) {
   return (
@@ -43,12 +55,22 @@ function StarRating({ count }: { count: number }) {
   );
 }
 
-export default function TestimonialsSection() {
+type TestimonialsSectionProps = {
+  testimonialContent?: HomeTestimonialContent;
+};
+
+export default function TestimonialsSection({
+  testimonialContent,
+}: TestimonialsSectionProps) {
+  const title = testimonialContent?.title ?? DEFAULT_SECTION_TITLE;
+  const items =
+    testimonialContent?.items?.length &&
+    testimonialContent.items.length > 0
+      ? testimonialContent.items
+      : FALLBACK_TESTIMONIALS;
+
   return (
     <section className="relative py-16 md:py-20 px-4 bg-transparent overflow-visible">
-      {/* Lines background is now handled by the parent wrapper in page.tsx */}
-
-      {/* Decorative Vectors Testimonial */}
       <div className="absolute inset-0 pointer-events-none z-0 overflow-visible">
         <Image
           src="/assets/vector-2.png"
@@ -74,48 +96,57 @@ export default function TestimonialsSection() {
       </div>
 
       <div className="relative max-w-5xl mx-auto z-10">
-        {/* Section heading */}
         <h2 className="text-center text-3xl sm:text-4xl md:text-5xl font-black text-[#263238] mb-16 md:mb-20">
-          Apa Kata Mereka?
+          {title}
         </h2>
 
-        {/* Testimonial cards — stacked on mobile, 3-column on desktop */}
         <div className="flex flex-col md:grid md:grid-cols-3 gap-10 md:gap-8 lg:gap-10">
-          {testimonials.map((t) => (
+          {items.map((t, index) => (
             <div
-              key={t.name}
+              key={`${t.name}-${index}`}
               className="bg-white rounded-[2rem] p-6 md:p-8 shadow-sm hover:shadow-xl transition-all duration-300 relative mt-4 md:mt-2"
             >
-              {/* Floating Avatar */}
               <div
-                className={`absolute -top-6 left-6 w-12 h-12 ${t.avatarColor} rounded-full flex items-center justify-center text-white shadow-md`}
+                className={`absolute -top-6 left-6 w-12 h-12 rounded-full flex items-center justify-center text-white shadow-md overflow-hidden ${
+                  t.imageUrl
+                    ? "bg-white ring-2 ring-white"
+                    : AVATAR_FALLBACK_COLORS[index % AVATAR_FALLBACK_COLORS.length]
+                }`}
               >
-                <svg
-                  className="w-6 h-6"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                {t.imageUrl ? (
+                  <Image
+                    src={t.imageUrl}
+                    alt=""
+                    width={48}
+                    height={48}
+                    className="h-full w-full object-cover"
+                    unoptimized
                   />
-                </svg>
+                ) : (
+                  <svg
+                    className="w-6 h-6"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+                    />
+                  </svg>
+                )}
               </div>
 
-              {/* Stars */}
               <div className="mt-4">
-                <StarRating count={t.rating} />
+                <StarRating count={t.star} />
               </div>
 
-              {/* Quote */}
               <p className="mt-4 text-gray-500 text-sm md:text-base italic leading-relaxed font-medium">
-                {t.quote}
+                {t.testimonial}
               </p>
 
-              {/* Author */}
               <div className="mt-8 md:mt-10">
                 <p className="font-extrabold text-[#263238] text-base">
                   {t.name}

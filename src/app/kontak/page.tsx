@@ -1,7 +1,5 @@
 "use client";
 
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import Image from "next/image";
 import { useState } from "react";
 import { MapPin, Send, MessageCircle, Phone, Mail } from "lucide-react";
@@ -26,7 +24,6 @@ export default function KontakPage() {
 
   return (
     <>
-      <Navbar />
       <main className="relative min-h-screen bg-[#FFFDF0] pt-32 pb-24 overflow-hidden">
         {/* BACKGROUND VECTORS - Biarkan Sesuai Permintaan */}
         <div className="absolute inset-0 pointer-events-none opacity-30 z-0">
@@ -192,7 +189,6 @@ export default function KontakPage() {
           </div>
         </section>
       </main>
-      <Footer />
     </>
   );
 }

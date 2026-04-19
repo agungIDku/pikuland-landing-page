@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
 import { Fredoka } from "next/font/google";
+import Footer from "@/components/Footer";
+import Navbar from "@/components/Navbar";
+import { fetchFooterContent } from "@/services/content/footer";
+import { fetchMenuContent } from "@/services/content/menu";
 import "./globals.css";
 
 const fredoka = Fredoka({
@@ -29,14 +33,27 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [menuPage, footerContent] = await Promise.all([
+    fetchMenuContent(),
+    fetchFooterContent(),
+  ]);
+
   return (
     <html lang="id">
-      <body className={`${fredoka.variable} antialiased`}>{children}</body>
+      <body className={`${fredoka.variable} antialiased`}>
+        <Navbar
+          menu={menuPage?.menu}
+          navCta={menuPage?.navCta}
+          logoUrl={menuPage?.logoUrl}
+        />
+        {children}
+        {footerContent ? <Footer content={footerContent} /> : null}
+      </body>
     </html>
   );
 }
