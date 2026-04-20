@@ -1,10 +1,22 @@
 "use client";
 
 import { CONTACT_PAGE_FALLBACK } from "@/data/contactDefaults";
+import { useLangCookie } from "@/hooks/useLangCookie";
+import {
+  contactFormUiCopy,
+  createContactFormSchema,
+  type ContactFormValues,
+} from "@/lib/contactFormSchema";
 import type { ContactContent } from "@/types/contactContent";
+import {
+  buildContactEmailPayloadFromForm,
+  postContactEmail,
+} from "@/services/emails";
+import { zodResolver } from "@hookform/resolvers/zod";
 import Image from "next/image";
-import { useState } from "react";
-import { MapPin, Send, MessageCircle, Phone, Mail } from "lucide-react";
+import { Loader2, Mail, MapPin, MessageCircle, Phone, Send } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
 
 type KontakPageClientProps = {
   content?: ContactContent;
@@ -12,25 +24,46 @@ type KontakPageClientProps = {
 
 export default function KontakPageClient({ content }: KontakPageClientProps) {
   const c = content ?? CONTACT_PAGE_FALLBACK;
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    message: "",
+  const f = c.form;
+  const lang = useLangCookie();
+  const contactSchema = useMemo(() => createContactFormSchema(lang), [lang]);
+  const ui = contactFormUiCopy[lang];
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<ContactFormValues>({
+    resolver: zodResolver(contactSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      message: "",
+    },
   });
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-  ) => {
-    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    console.log("Pesan Terkirim", formData);
+  const onSubmit = async (values: ContactFormValues) => {
+    setSubmitSuccess(false);
+    setSubmitError(false);
+    const payload = buildContactEmailPayloadFromForm(values);
+    const result = await postContactEmail(payload);
+    if (result.ok) {
+      reset();
+      setSubmitSuccess(true);
+      return;
+    }
+    setSubmitError(true);
   };
 
   const mapsUrl = c.location.mapsUrl?.trim();
-  const f = c.form;
+
+  const inputClass =
+    "w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#E5007E] focus:outline-none transition-all text-slate-600";
+  const errorClass = "text-xs font-semibold text-red-500 mt-1.5 px-1";
 
   return (
     <>
@@ -149,58 +182,114 @@ export default function KontakPageClient({ content }: KontakPageClientProps) {
                   {f.title}
                 </h3>
 
-                <form onSubmit={handleSubmit} className="space-y-6">
+                {submitSuccess ? (
+                  <div
+                    className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50/90 p-5 text-sm text-emerald-950 space-y-2"
+                    role="status"
+                  >
+                    <p className="font-medium leading-relaxed">
+                      {ui.successMessage}
+                    </p>
+                  </div>
+                ) : null}
+
+                {submitError ? (
+                  <div
+                    className="mb-6 rounded-2xl border border-red-200 bg-red-50/90 p-5 text-sm text-red-950 space-y-2"
+                    role="alert"
+                  >
+                    <p className="text-[11px] font-black uppercase tracking-wider text-red-700">
+                      {ui.errorLabel}
+                    </p>
+                    <p className="font-medium leading-relaxed">
+                      {ui.errorMessage}
+                    </p>
+                  </div>
+                ) : null}
+
+                <form
+                  onSubmit={handleSubmit(onSubmit)}
+                  className="space-y-6"
+                  noValidate
+                >
+                  <div
+                    className="space-y-6"
+                    onFocusCapture={() => {
+                      setSubmitSuccess(false);
+                      setSubmitError(false);
+                    }}
+                  >
                   <div>
-                    <label className="block text-sm font-black text-[#1A2E44] mb-2 px-1">
+                    <label
+                      htmlFor="contact-name"
+                      className="block text-sm font-black text-[#1A2E44] mb-2 px-1"
+                    >
                       {f.parentsNameLabel}
                     </label>
                     <input
+                      id="contact-name"
                       type="text"
-                      name="name"
-                      value={formData.name}
-                      onChange={handleChange}
+                      autoComplete="name"
                       placeholder={f.parentsNamePlaceholder}
-                      className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#E5007E] focus:outline-none transition-all text-slate-600"
-                      required
+                      className={`${inputClass} ${errors.name ? "border-red-300" : ""}`}
+                      {...register("name")}
                     />
+                    {errors.name ? (
+                      <p className={errorClass}>{errors.name.message}</p>
+                    ) : null}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-black text-[#1A2E44] mb-2 px-1">
+                    <label
+                      htmlFor="contact-email"
+                      className="block text-sm font-black text-[#1A2E44] mb-2 px-1"
+                    >
                       {f.emailLabel}
                     </label>
                     <input
+                      id="contact-email"
                       type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleChange}
+                      autoComplete="email"
                       placeholder="email@contoh.com"
-                      className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#E5007E] focus:outline-none transition-all text-slate-600"
-                      required
+                      className={`${inputClass} ${errors.email ? "border-red-300" : ""}`}
+                      {...register("email")}
                     />
+                    {errors.email ? (
+                      <p className={errorClass}>{errors.email.message}</p>
+                    ) : null}
                   </div>
 
                   <div>
-                    <label className="block text-sm font-black text-[#1A2E44] mb-2 px-1">
+                    <label
+                      htmlFor="contact-message"
+                      className="block text-sm font-black text-[#1A2E44] mb-2 px-1"
+                    >
                       {f.messageLabel}
                     </label>
                     <textarea
-                      name="message"
-                      value={formData.message}
-                      onChange={handleChange}
-                      placeholder={f.messagePlaceholder}
+                      id="contact-message"
                       rows={4}
-                      className="w-full px-5 py-4 rounded-2xl bg-slate-50 border border-slate-100 focus:border-[#E5007E] focus:outline-none resize-none text-slate-600"
-                      required
+                      placeholder={f.messagePlaceholder}
+                      className={`${inputClass} resize-none ${errors.message ? "border-red-300" : ""}`}
+                      {...register("message")}
                     />
+                    {errors.message ? (
+                      <p className={errorClass}>{errors.message.message}</p>
+                    ) : null}
+                  </div>
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full bg-[#E5007E] text-white py-4 rounded-full font-black text-lg flex items-center justify-center gap-3 hover:brightness-110 transition-all shadow-lg shadow-pink-200"
+                    disabled={isSubmitting}
+                    className="w-full bg-[#E5007E] text-white py-4 rounded-full font-black text-lg flex items-center justify-center gap-3 hover:brightness-110 transition-all shadow-lg shadow-pink-200 disabled:opacity-60 disabled:pointer-events-none"
                   >
-                    <Send size={20} className="rotate-[-10deg]" />{" "}
-                    {f.submitButtonLabel}
+                    {isSubmitting ? (
+                      <Loader2 size={22} className="animate-spin" />
+                    ) : (
+                      <Send size={20} className="rotate-[-10deg]" />
+                    )}
+                    {isSubmitting ? ui.submitting : f.submitButtonLabel}
                   </button>
                 </form>
               </div>
