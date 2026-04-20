@@ -6,10 +6,9 @@ import type {
 } from "@/types/footerContent";
 import { cache } from "react";
 
+import { getLang } from "../lang";
 import { proxyUrl } from "../proxyUrl";
 import { withRetry } from "../withRetry";
-
-const DEFAULT_LANG = "id";
 
 /** Map CMS paths to app routes (`/ticket` → `/tiket`, etc.). */
 const APP_PATH_ALIASES: Record<string, string> = {
@@ -305,7 +304,7 @@ export function normalizeFooterContent(
 }
 
 export async function getPageContentFooter(): Promise<unknown> {
-  const lang = DEFAULT_LANG;
+  const lang = await getLang();
   const res = await fetch(proxyUrl(`client/pages/footer?lang=${lang}`), {
     cache: "no-store",
     headers: { "Accept-Language": lang },

@@ -7,6 +7,8 @@ import { useState, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { X, Menu } from "lucide-react";
 
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+
 type NavbarProps = {
   menu?: MenuItem[];
   navCta?: MenuNavCta;
@@ -65,18 +67,19 @@ export default function Navbar({ menu, navCta, logoUrl }: NavbarProps) {
             ))}
           </div>
 
-          {/* Desktop CTA Button */}
-          <Link
-            href={cta.href}
-            className="hidden md:inline-flex items-center gap-2 bg-blue text-white font-bold text-sm px-6 py-2.5 rounded-full hover:bg-[#009CE0] transition-all hover:-translate-y-0.5 shadow-[3px_4px_0px_#007DB3] active:translate-y-1 active:shadow-none"
-          >
-            {cta.label}
-          </Link>
+          <div className="hidden md:flex items-center gap-2 shrink-0">
+            <LanguageSwitcher variant="desktop" />
+            <Link
+              href={cta.href}
+              className="inline-flex items-center gap-2 bg-blue text-white font-bold text-sm px-6 py-2.5 rounded-full hover:bg-[#009CE0] transition-all hover:-translate-y-0.5 shadow-[3px_4px_0px_#007DB3] active:translate-y-1 active:shadow-none"
+            >
+              {cta.label}
+            </Link>
+          </div>
 
-          {/* Mobile menu button (Hamburger) */}
           <button
             onClick={() => setMobileMenuOpen(true)}
-            className="md:hidden p-2 text-[#1A2E44]"
+            className="md:hidden p-2 text-[#1A2E44] shrink-0"
             aria-label="Open menu"
           >
             <Menu size={28} />
@@ -125,11 +128,21 @@ export default function Navbar({ menu, navCta, logoUrl }: NavbarProps) {
                   </Link>
                 ))}
 
+                <div
+                  style={{ animationDelay: `${navLinks.length * 100}ms` }}
+                  className="mt-2 w-full max-w-sm animate-in fade-in slide-in-from-bottom-4 duration-500 fill-mode-forwards"
+                >
+                  <LanguageSwitcher
+                    variant="mobile"
+                    onBeforeNavigate={() => setMobileMenuOpen(false)}
+                  />
+                </div>
+
                 {/* 3. Button - Muncul paling terakhir */}
                 <Link
                   href={cta.href}
                   onClick={() => setMobileMenuOpen(false)}
-                  style={{ animationDelay: `${navLinks.length * 100}ms` }}
+                  style={{ animationDelay: `${(navLinks.length + 1) * 100}ms` }}
                   className="mt-4 bg-blue text-white font-black text-xl px-12 py-4 rounded-full shadow-[4px_6px_0px_#007DB3] hover:translate-y-1 hover:shadow-none transition-all animate-in fade-in zoom-in duration-500 fill-mode-forwards"
                 >
                   {cta.label}

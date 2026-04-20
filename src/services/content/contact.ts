@@ -5,10 +5,9 @@ import type {
 } from "@/types/contactContent";
 import { cache } from "react";
 
+import { getLang } from "../lang";
 import { proxyUrl } from "../proxyUrl";
 import { withRetry } from "../withRetry";
-
-const DEFAULT_LANG = "id";
 
 function str(v: unknown): string {
   if (v == null || v === "") return "";
@@ -101,7 +100,7 @@ export function normalizeContactContent(
 }
 
 async function getPageContentContact(): Promise<unknown> {
-  const lang = DEFAULT_LANG;
+  const lang = await getLang();
   const res = await fetch(proxyUrl(`client/pages/contact?lang=${lang}`), {
     cache: "no-store",
     headers: { "Accept-Language": lang },

@@ -6,10 +6,9 @@ import type {
 } from "@/types/menuContent";
 import { cache } from "react";
 
+import { getLang } from "../lang";
 import { proxyUrl } from "../proxyUrl";
 import { withRetry } from "../withRetry";
-
-const DEFAULT_LANG = "id";
 
 const MENU_ORDER: { href: string; labelKey: keyof NonNullable<MenuContentApiRaw["menus"]> }[] =
   [
@@ -55,7 +54,7 @@ function normalizeMenuContent(raw: MenuContentApiRaw): MenuContent {
 }
 
 export async function getPageContentMenu() {
-  const lang = DEFAULT_LANG;
+  const lang = await getLang();
   const res = await fetch(proxyUrl(`client/pages/menu?lang=${lang}`), {
     cache: "no-store",
     headers: { "Accept-Language": lang },

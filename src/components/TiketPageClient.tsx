@@ -1,0 +1,557 @@
+"use client";
+
+import { TICKET_PAGE_FALLBACK } from "@/data/ticketDefaults";
+import type { TicketContent } from "@/types/ticketContent";
+import Image from "next/image";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Minus,
+  Plus,
+  Calendar as CalendarIcon,
+  Users,
+} from "lucide-react";
+
+const tickets = [
+  {
+    id: "harian",
+    title: "Tiket Harian",
+    price: "150.000",
+    unit: "/ anak",
+    features: [
+      "Akses seharian penuh",
+      "Termasuk 1 pendamping",
+      "Akses semua wahana",
+      "Free Wifi untuk orang tua",
+    ],
+    color: "text-[#00AEEF]",
+    icon: "📅",
+  },
+  {
+    id: "annual",
+    title: "Annual Pass",
+    price: "1.500.000",
+    unit: "/ tahun",
+    features: [
+      "Bebas masuk setahun",
+      "Diskon ultah 20%",
+      "Antrian prioritas",
+      "Merchandise eksklusif",
+      "Undangan event member",
+    ],
+    color: "text-[#E5007E]",
+    popular: true,
+    icon: "👑",
+  },
+  {
+    id: "ultah",
+    title: "Paket Ulang Tahun",
+    price: "250.000",
+    unit: "/ anak (min 10)",
+    features: [
+      "Ruang pesta privat (2 jam)",
+      "Dekorasi tematik",
+      "MC & Games seru",
+      "Makan siang & Snack",
+      "Goodie bag spesial",
+    ],
+    color: "text-[#FFC107]",
+    icon: "⭐",
+  },
+];
+
+function looksLikeHtml(s: string): boolean {
+  return /<[^>]+>/.test(s);
+}
+
+function startOfLocalDay(d: Date): Date {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate());
+}
+
+function sameLocalDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function buildMonthGrid(year: number, monthIndex: number): (number | null)[] {
+  const first = new Date(year, monthIndex, 1);
+  const pad = first.getDay();
+  const dim = new Date(year, monthIndex + 1, 0).getDate();
+  const cells: (number | null)[] = [];
+  for (let i = 0; i < pad; i++) cells.push(null);
+  for (let d = 1; d <= dim; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+  return cells;
+}
+
+type TiketPageClientProps = {
+  content?: TicketContent;
+};
+
+export default function TiketPageClient({ content }: TiketPageClientProps) {
+  const c = content ?? TICKET_PAGE_FALLBACK;
+  const checkout = c.ticketCheckoutPage;
+  const f = checkout.form;
+
+  const visitorRows = [
+    {
+      key: "anak" as const,
+      label: f.children.label,
+      sub: f.children.detailInfo,
+    },
+    {
+      key: "dewasa" as const,
+      label: f.adult.label,
+      sub: f.adult.detailInfo,
+    },
+  ];
+
+  const [step, setStep] = useState(1);
+  const [counts, setCounts] = useState({ anak: 1, dewasa: 1 });
+  /** First day of the month being shown in the date picker. */
+  const [viewDate, setViewDate] = useState(() => {
+    const n = new Date();
+    return new Date(n.getFullYear(), n.getMonth(), 1);
+  });
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+  useEffect(() => {
+    if (step !== 2) {
+      setSelectedDate(null);
+      return;
+    }
+    const n = new Date();
+    setViewDate(new Date(n.getFullYear(), n.getMonth(), 1));
+  }, [step]);
+
+  const calendar = useMemo(() => {
+    const y = viewDate.getFullYear();
+    const m = viewDate.getMonth();
+    return {
+      year: y,
+      monthIndex: m,
+      cells: buildMonthGrid(y, m),
+    };
+  }, [viewDate]);
+
+  const monthTitle = useMemo(
+    () =>
+      new Intl.DateTimeFormat("id-ID", {
+        month: "long",
+        year: "numeric",
+      }).format(viewDate),
+    [viewDate],
+  );
+
+  const updateCount = (type: "anak" | "dewasa", val: number) => {
+    setCounts((prev) => ({ ...prev, [type]: Math.max(0, prev[type] + val) }));
+  };
+
+  const goPrevMonth = () => {
+    setViewDate((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1));
+  };
+
+  const goNextMonth = () => {
+    setViewDate((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1));
+  };
+
+  return (
+    <>
+      <main className="relative min-h-screen bg-[#FFFBE6] pt-28 pb-16 overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none opacity-30 z-0">
+          <Image
+            src="/assets/lines-1.png"
+            alt=""
+            fill
+            className="object-cover object-top"
+          />
+        </div>
+
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-visible">
+          <Image
+            src="/assets/vector-1.png"
+            alt=""
+            width={100}
+            height={100}
+            className="absolute top-[15%] right-[13%] rotate-180 scale-x-[-1]"
+          />
+          <Image
+            src="/assets/vector-10.png"
+            alt=""
+            width={150}
+            height={150}
+            className="absolute top-[19%] right-[8%]"
+          />
+          <Image
+            src="/assets/vector-1.png"
+            alt=""
+            width={100}
+            height={50}
+            className="absolute top-[45%] left-[2%]"
+          />
+          <Image
+            src="/assets/vector-17.png"
+            alt=""
+            width={250}
+            height={1125}
+            className="absolute bottom-[-3%] right-[5%]"
+          />
+        </div>
+
+        <section className="relative z-10 max-w-7xl mx-auto px-4">
+          <div className="text-center mb-10">
+            <h1 className="text-3xl md:text-5xl font-black text-[#1A2E44] mb-4">
+              {step === 1 ? c.title : checkout.title}
+            </h1>
+            {step === 1 ? (
+              <div
+                className="text-slate-500 max-w-xl mx-auto font-medium leading-relaxed [&_p]:mb-0"
+                dangerouslySetInnerHTML={{ __html: c.description }}
+              />
+            ) : (
+              <div
+                className="text-slate-500 max-w-xl mx-auto font-medium leading-relaxed [&_p]:mb-0"
+                dangerouslySetInnerHTML={{ __html: checkout.description }}
+              />
+            )}
+          </div>
+
+          <div className="flex justify-center mb-16">
+            <div className="bg-white/80 backdrop-blur rounded-full px-8 py-3 shadow-sm border border-yellow-100 flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${step >= 1 ? "bg-[#E5007E] text-white" : "bg-slate-200 text-slate-500"}`}
+                >
+                  {step > 1 ? <Check size={14} /> : "1"}
+                </span>
+                <span
+                  className={`hidden sm:inline text-sm font-bold ${step >= 1 ? "text-[#E5007E]" : "text-slate-400"}`}
+                >
+                  {c.steps.step1Label}
+                </span>
+              </div>
+              <div
+                className={`h-[2px] w-12 ${step >= 2 ? "bg-[#E5007E]" : "bg-slate-200"}`}
+              />
+              <div className="flex items-center gap-2">
+                <span
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${step >= 2 ? "bg-[#E5007E] text-white" : "bg-slate-200 text-slate-500"}`}
+                >
+                  {step > 2 ? <Check size={14} /> : "2"}
+                </span>
+                <span
+                  className={`hidden sm:inline text-sm font-bold max-w-[8rem] truncate sm:max-w-none ${step >= 2 ? "text-[#E5007E]" : "text-slate-400"}`}
+                >
+                  {c.steps.step2Label}
+                </span>
+              </div>
+              <div
+                className={`h-[2px] w-12 ${step >= 3 ? "bg-[#E5007E]" : "bg-slate-200"}`}
+              />
+              <div className="flex items-center gap-2">
+                <span
+                  className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${step === 3 ? "bg-[#E5007E] text-white" : "bg-slate-200 text-slate-500"}`}
+                >
+                  3
+                </span>
+                <span
+                  className={`hidden sm:inline text-sm font-bold ${step === 3 ? "text-[#E5007E]" : "text-slate-400"}`}
+                >
+                  {c.steps.step3Label}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {step === 1 && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-20">
+                {tickets.map((t) => (
+                  <div
+                    key={t.id}
+                    className={`relative bg-white rounded-[2.5rem] p-8 shadow-xl border border-slate-50 flex flex-col ${t.popular ? "ring-4 ring-[#E5007E]/10" : ""}`}
+                  >
+                    {t.popular && (
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#E5007E] text-white text-[10px] font-black px-5 py-1.5 rounded-full uppercase tracking-widest shadow-lg">
+                        {c.cheapestPriceLabel}
+                      </div>
+                    )}
+                    <div
+                      className={`w-14 h-14 rounded-2xl mb-6 flex items-center justify-center text-2xl shadow-inner ${t.id === "harian" ? "bg-cyan-50" : t.id === "annual" ? "bg-pink-50" : "bg-yellow-50"}`}
+                    >
+                      {t.icon}
+                    </div>
+                    <h3 className="text-xl font-black text-[#1A2E44] mb-1">
+                      {t.title}
+                    </h3>
+                    <div className="mb-8">
+                      <span className={`text-2xl font-black ${t.color}`}>
+                        Rp {t.price}
+                      </span>
+                      <span className="text-slate-400 text-sm font-medium">
+                        {" "}
+                        {t.unit}
+                      </span>
+                    </div>
+                    <ul className="space-y-4 mb-10 flex-grow">
+                      {t.features.map((feat, i) => (
+                        <li
+                          key={i}
+                          className="flex items-start gap-3 text-sm text-slate-600 font-medium leading-tight"
+                        >
+                          <Check
+                            size={16}
+                            className={`${t.color} mt-0.5 shrink-0`}
+                          />{" "}
+                          {feat}
+                        </li>
+                      ))}
+                    </ul>
+                    <button
+                      type="button"
+                      onClick={() => setStep(2)}
+                      className={`w-full py-3.5 rounded-full font-bold transition-all ${t.popular ? "bg-[#E5007E] text-white shadow-lg hover:brightness-110" : "bg-slate-50 text-slate-600 hover:bg-slate-100"}`}
+                    >
+                      {c.chooseTicketLabel}
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <div className="max-w-3xl mx-auto bg-white/60 backdrop-blur rounded-[2.5rem] p-8 md:p-12 shadow-sm border border-yellow-100">
+                <h2 className="text-2xl font-black text-[#1A2E44] text-center mb-8">
+                  {c.fnq.title}
+                </h2>
+                <div className="space-y-4">
+                  {c.fnq.items.map((faq, i) => (
+                    <details
+                      key={`${faq.question}-${i}`}
+                      className="group border-b border-slate-100 last:border-0 pb-4"
+                    >
+                      <summary className="flex items-center justify-between cursor-pointer font-bold text-[#1A2E44] list-none">
+                        {faq.question}
+                        <ChevronRight
+                          size={18}
+                          className="group-open:rotate-90 transition-transform text-slate-400 shrink-0 ml-2"
+                        />
+                      </summary>
+                      {looksLikeHtml(faq.answer) ? (
+                        <div
+                          className="mt-3 text-sm text-slate-500 leading-relaxed [&_p]:mb-2"
+                          dangerouslySetInnerHTML={{ __html: faq.answer }}
+                        />
+                      ) : (
+                        <p className="mt-3 text-sm text-slate-500 leading-relaxed">
+                          {faq.answer}
+                        </p>
+                      )}
+                    </details>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {step === 2 && (
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-5xl mx-auto">
+              <div className="bg-white rounded-[3rem] p-8 md:p-12 shadow-2xl border border-slate-100">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                  <div>
+                    {f.ticketInformation ? (
+                      looksLikeHtml(f.ticketInformation) ? (
+                        <div
+                          className="mb-4 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3 text-xs text-slate-600 font-medium leading-relaxed [&_p]:mb-1"
+                          dangerouslySetInnerHTML={{
+                            __html: f.ticketInformation,
+                          }}
+                        />
+                      ) : (
+                        <p className="mb-4 rounded-2xl border border-slate-100 bg-slate-50/80 px-4 py-3 text-xs text-slate-600 font-medium leading-relaxed">
+                          {f.ticketInformation}
+                        </p>
+                      )
+                    ) : null}
+                    <div className="flex items-center gap-2 mb-6">
+                      <CalendarIcon className="text-cyan-500" size={20} />
+                      <h3 className="text-xl font-black text-[#1A2E44]">
+                        {f.chooseDateLabel}
+                      </h3>
+                    </div>
+                    <div className="border border-slate-100 rounded-3xl p-6">
+                      <div className="flex items-center justify-between mb-6 px-2">
+                        <span className="font-black text-[#1A2E44] capitalize">
+                          {monthTitle}
+                        </span>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={goPrevMonth}
+                            className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400"
+                            aria-label="Bulan sebelumnya"
+                          >
+                            <ChevronLeft size={20} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={goNextMonth}
+                            className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400"
+                            aria-label="Bulan berikutnya"
+                          >
+                            <ChevronRight size={20} />
+                          </button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 uppercase tracking-tighter mb-4">
+                        {["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"].map(
+                          (d) => (
+                            <div key={d}>{d}</div>
+                          ),
+                        )}
+                      </div>
+                      <div className="grid grid-cols-7 gap-1">
+                        {calendar.cells.map((day, idx) => {
+                          if (day === null) {
+                            return (
+                              <div
+                                key={`empty-${idx}`}
+                                className="aspect-square"
+                                aria-hidden
+                              />
+                            );
+                          }
+                          const cellDate = new Date(
+                            calendar.year,
+                            calendar.monthIndex,
+                            day,
+                            12,
+                            0,
+                            0,
+                          );
+                          const dayStart = startOfLocalDay(cellDate);
+                          const todayStart = startOfLocalDay(new Date());
+                          const isPast = dayStart < todayStart;
+                          const isSelected =
+                            selectedDate != null &&
+                            sameLocalDay(selectedDate, cellDate);
+                          const isToday =
+                            dayStart.getTime() === todayStart.getTime();
+
+                          if (isPast) {
+                            return (
+                              <span
+                                key={`${calendar.year}-${calendar.monthIndex}-${day}`}
+                                className="aspect-square flex items-center justify-center rounded-full text-sm font-bold text-slate-300 opacity-40 cursor-not-allowed select-none"
+                                aria-disabled="true"
+                              >
+                                {day}
+                              </span>
+                            );
+                          }
+
+                          return (
+                            <button
+                              key={`${calendar.year}-${calendar.monthIndex}-${day}`}
+                              type="button"
+                              onClick={() => setSelectedDate(cellDate)}
+                              className={[
+                                "aspect-square flex items-center justify-center rounded-full text-sm font-bold transition-colors",
+                                isSelected
+                                  ? "bg-[#E5007E] text-white shadow-lg"
+                                  : "text-[#1A2E44] hover:bg-pink-50",
+                                isToday && !isSelected
+                                  ? "ring-2 ring-[#E5007E]/40 ring-offset-1"
+                                  : "",
+                              ].join(" ")}
+                            >
+                              {day}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="mt-4 p-4 bg-yellow-50 rounded-2xl border border-yellow-100 flex gap-3 items-start">
+                      <span className="text-lg" aria-hidden>
+                        ⚠️
+                      </span>
+                      <div
+                        className="text-[11px] text-yellow-800 font-medium leading-relaxed min-w-0 [&_p]:mb-0"
+                        dangerouslySetInnerHTML={{
+                          __html: f.dateInformation,
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-2 mb-6">
+                      <Users className="text-yellow-500" size={20} />
+                      <h3 className="text-xl font-black text-[#1A2E44]">
+                        {f.totalVisitorsLabel}
+                      </h3>
+                    </div>
+                    <div className="space-y-4 flex-grow">
+                      {visitorRows.map((item) => (
+                        <div
+                          key={item.key}
+                          className="flex items-center justify-between p-6 bg-slate-50 rounded-[2rem] border border-slate-100"
+                        >
+                          <div>
+                            <p className="font-black text-[#1A2E44]">
+                              {item.label}
+                            </p>
+                            <p className="text-xs text-slate-400 font-medium">
+                              {item.sub}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-4 bg-white rounded-full px-2 py-2 shadow-sm border border-slate-100">
+                            <button
+                              type="button"
+                              onClick={() => updateCount(item.key, -1)}
+                              className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-pink-500"
+                            >
+                              <Minus size={16} />
+                            </button>
+                            <span className="w-6 text-center font-black text-lg">
+                              {counts[item.key]}
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => updateCount(item.key, 1)}
+                              className="w-8 h-8 flex items-center justify-center rounded-full bg-slate-50 text-slate-400 hover:text-pink-500"
+                            >
+                              <Plus size={16} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-8 flex gap-4">
+                      <button
+                        type="button"
+                        onClick={() => setStep(1)}
+                        className="flex-1 py-4 rounded-full font-black text-slate-400 border-2 border-slate-100 hover:bg-slate-50 flex items-center justify-center gap-2"
+                      >
+                        <ChevronLeft size={20} /> {f.buttonBackLabel}
+                      </button>
+                      <button
+                        type="button"
+                        className="flex-[2] py-4 rounded-full font-black text-white bg-[#E5007E] shadow-xl shadow-pink-200 hover:brightness-110 transition-all"
+                      >
+                        {f.buttonSubmitLabel}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
+      </main>
+    </>
+  );
+}

@@ -1,9 +1,8 @@
 import { cache } from "react";
 
+import { getLang } from "../lang";
 import { proxyUrl } from "../proxyUrl";
 import { withRetry } from "../withRetry";
-
-const DEFAULT_LANG = "id";
 
 /**
  * API envelope: `{ status, code, message, data: [{ _id, label, ... }], pagination }`.
@@ -68,7 +67,7 @@ export function normalizeGalleryTypes(json: unknown): string[] | undefined {
 }
 
 export async function requestGalleryTypesJson(): Promise<unknown> {
-  const lang = DEFAULT_LANG;
+  const lang = await getLang();
   const res = await fetch(proxyUrl(`client/gallery-types?lang=${lang}`), {
     cache: "no-store",
     headers: { "Accept-Language": lang },

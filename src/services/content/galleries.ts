@@ -5,10 +5,9 @@ import {
   parseGalleryTypesEnvelope,
   requestGalleryTypesJson,
 } from "./galleryTypes";
+import { getLang } from "../lang";
 import { proxyUrl } from "../proxyUrl";
 import { withRetry } from "../withRetry";
-
-const DEFAULT_LANG = "id";
 
 /**
  * `GET client/galleries?lang=id` — list media for the gallery grid.
@@ -102,7 +101,7 @@ export function normalizeGalleries(
 }
 
 async function getGalleriesJson(): Promise<unknown> {
-  const lang = DEFAULT_LANG;
+  const lang = await getLang();
   const res = await fetch(proxyUrl(`client/galleries?lang=${lang}`), {
     cache: "no-store",
     headers: { "Accept-Language": lang },

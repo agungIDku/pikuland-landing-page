@@ -1,13 +1,12 @@
 import type { HomePageApiResponse, HomeContent } from "@/types/homeContent";
 import { cache } from "react";
 
+import { getLang } from "../lang";
 import { proxyUrl } from "../proxyUrl";
 import { withRetry } from "../withRetry";
 
-const DEFAULT_LANG = "id";
-
 export async function getPageContentHome() {
-  const lang = DEFAULT_LANG;
+  const lang = await getLang();
   const res = await fetch(proxyUrl(`client/pages/home?lang=${lang}`), {
     cache: "no-store",
     headers: { "Accept-Language": lang },

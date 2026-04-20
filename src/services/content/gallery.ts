@@ -9,10 +9,9 @@ import type {
 } from "@/types/galleryContent";
 import { cache } from "react";
 
+import { getLang } from "../lang";
 import { proxyUrl } from "../proxyUrl";
 import { withRetry } from "../withRetry";
-
-const DEFAULT_LANG = "id";
 
 function str(v: unknown): string {
   if (v == null || v === "") return "";
@@ -158,7 +157,7 @@ export function normalizeGalleryContent(
 }
 
 async function getPageContentGallery(): Promise<unknown> {
-  const lang = DEFAULT_LANG;
+  const lang = await getLang();
   const res = await fetch(proxyUrl(`client/pages/gallery?lang=${lang}`), {
     cache: "no-store",
     headers: { "Accept-Language": lang },

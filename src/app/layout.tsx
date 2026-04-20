@@ -4,7 +4,10 @@ import Footer from "@/components/Footer";
 import Navbar from "@/components/Navbar";
 import { fetchFooterContent } from "@/services/content/footer";
 import { fetchMenuContent } from "@/services/content/menu";
+import { getLang } from "@/services/lang";
 import "./globals.css";
+
+export const dynamic = "force-dynamic";
 
 const fredoka = Fredoka({
   variable: "--font-sans",
@@ -38,13 +41,14 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [menuPage, footerContent] = await Promise.all([
+  const [menuPage, footerContent, lang] = await Promise.all([
     fetchMenuContent(),
     fetchFooterContent(),
+    getLang(),
   ]);
 
   return (
-    <html lang="id">
+    <html lang={lang}>
       <body className={`${fredoka.variable} antialiased`}>
         <Navbar
           menu={menuPage?.menu}
