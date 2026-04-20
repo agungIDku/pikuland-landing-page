@@ -1,7 +1,9 @@
 "use client";
 
 import { CAREER_PAGE_FALLBACK } from "@/data/careerDefaults";
+import { CAREER_JOBS_FALLBACK } from "@/data/careerJobsFallback";
 import type { CareerContent } from "@/types/careerContent";
+import type { CareerJob } from "@/types/careerJob";
 import Image from "next/image";
 import { Smile, Heart, BookOpen, ChevronDown } from "lucide-react";
 
@@ -13,48 +15,13 @@ const VALUE_ICONS = [
 
 const VALUE_BGS = ["bg-yellow-50", "bg-pink-50", "bg-cyan-50"] as const;
 
-const jobs = [
-  {
-    id: "facilitator",
-    title: "Play Fasilitator (Kakak Pendamping)",
-    category: "Operasional",
-    type: "Full Time / Part Time",
-    description:
-      "Bertanggung jawab mendampingi anak-anak bermain, memastikan keamanan, dan menciptakan suasana ceria di setiap wahana.",
-    qualifications: [
-      "Usia 18-25 tahun",
-      "Suka anak-anak & energik",
-      "Pendidikan minimal SMA/SMK",
-      "Bersedia kerja shift & weekend",
-    ],
-    deadline: "23 Januari 2026",
-    isOpen: true,
-  },
-  {
-    id: "cs",
-    title: "Customer Service Officer",
-    category: "Front Office",
-    type: "Full Time",
-    isOpen: false,
-  },
-  {
-    id: "event",
-    title: "Creative Event Staff",
-    category: "Marketing",
-    type: "Full Time",
-    isOpen: false,
-  },
-  {
-    id: "cleaning",
-    title: "Cleaning Crew",
-    category: "Facility",
-    type: "Full Time",
-    isOpen: false,
-  },
-];
+function descriptionIsHtml(s: string): boolean {
+  return /<[^>]+>/.test(s);
+}
 
 type KarirPageClientProps = {
   content?: CareerContent;
+  jobs?: CareerJob[];
 };
 
 function CareerHeroTitle({ title }: { title: string }) {
@@ -85,9 +52,102 @@ function CareerHeroTitle({ title }: { title: string }) {
   );
 }
 
-export default function KarirPageClient({ content }: KarirPageClientProps) {
+function CareerJobCard({ job, defaultOpen }: { job: CareerJob; defaultOpen: boolean }) {
+  const desc = job.description?.trim() ?? "";
+  const html = desc && descriptionIsHtml(desc);
+
+  return (
+    <details
+      open={defaultOpen}
+      className="group rounded-[2rem] border border-slate-100 bg-white overflow-hidden transition-all open:border-[#E5007E] open:border-2"
+    >
+      <summary className="flex cursor-pointer items-center justify-between p-6 md:p-8 list-none outline-none">
+        <div className="flex flex-col gap-3">
+          <h3 className="text-lg md:text-xl font-black text-[#1A2E44] group-open:text-[#E5007E] transition-colors">
+            {job.title}
+          </h3>
+          <div className="flex flex-wrap gap-2">
+            <span className="bg-[#26C1ED] text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
+              {job.department}
+            </span>
+            <span className="bg-slate-100 text-slate-500 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
+              {job.type}
+            </span>
+          </div>
+        </div>
+        <ChevronDown
+          className="text-slate-300 group-open:rotate-180 transition-transform shrink-0"
+          size={24}
+        />
+      </summary>
+
+      <div className="px-6 md:px-8 pb-8 pt-2">
+        {html ? (
+          <div
+            className="text-sm text-slate-500 leading-relaxed mb-6 font-medium max-w-none [&_p]:mb-3 [&_strong]:text-[#1A2E44]"
+            dangerouslySetInnerHTML={{ __html: desc }}
+          />
+        ) : desc ? (
+          <p className="text-sm text-slate-500 leading-relaxed mb-6 font-medium whitespace-pre-wrap">
+            {desc}
+          </p>
+        ) : null}
+
+        {job.location ? (
+          <p className="text-sm text-slate-600 font-bold mb-4">
+            Lokasi:{" "}
+            <span className="font-medium text-slate-500">{job.location}</span>
+          </p>
+        ) : null}
+
+        {job.qualifications && job.qualifications.length > 0 ? (
+          <div className="mb-6">
+            <h4 className="font-black text-[#1A2E44] text-sm mb-3">
+              Kualifikasi:
+            </h4>
+            <ul className="space-y-2">
+              {job.qualifications.map((q, i) => (
+                <li
+                  key={i}
+                  className="text-sm text-slate-500 flex items-center gap-2 font-medium"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0" />{" "}
+                  {q}
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-6 border-t border-slate-50">
+          <div>
+            <p className="text-sm font-black text-[#1A2E44]">
+              Kirim CV kamu ke :
+            </p>
+            <a
+              href={`mailto:${job.email}`}
+              className="text-[#00AEEF] font-bold text-sm hover:underline"
+            >
+              {job.email}
+            </a>
+          </div>
+          {job.dueDateLabel ? (
+            <p className="text-[11px] italic text-red-500 font-medium">
+              *Lowongan Berakhir {job.dueDateLabel}
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </details>
+  );
+}
+
+export default function KarirPageClient({ content, jobs }: KarirPageClientProps) {
   const c = content ?? CAREER_PAGE_FALLBACK;
-  const descriptionIsHtml = /<[^>]+>/.test(c.description);
+  const heroDescHtml = descriptionIsHtml(c.description);
+
+  const jobList =
+    jobs && jobs.length > 0 ? jobs : CAREER_JOBS_FALLBACK;
 
   return (
     <>
@@ -138,7 +198,7 @@ export default function KarirPageClient({ content }: KarirPageClientProps) {
               {c.preTitle}
             </div>
             <CareerHeroTitle title={c.title} />
-            {descriptionIsHtml ? (
+            {heroDescHtml ? (
               <div
                 className="text-slate-500 max-w-2xl leading-relaxed font-medium [&_p]:mb-0"
                 dangerouslySetInnerHTML={{ __html: c.description }}
@@ -177,71 +237,12 @@ export default function KarirPageClient({ content }: KarirPageClientProps) {
             </h2>
 
             <div className="space-y-4">
-              {jobs.map((job) => (
-                <details
+              {jobList.map((job, index) => (
+                <CareerJobCard
                   key={job.id}
-                  open={job.isOpen}
-                  className="group rounded-[2rem] border border-slate-100 bg-white overflow-hidden transition-all open:border-[#E5007E] open:border-2"
-                >
-                  <summary className="flex cursor-pointer items-center justify-between p-6 md:p-8 list-none outline-none">
-                    <div className="flex flex-col gap-3">
-                      <h3 className="text-lg md:text-xl font-black text-[#1A2E44] group-open:text-[#E5007E] transition-colors">
-                        {job.title}
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        <span className="bg-[#26C1ED] text-white px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
-                          {job.category}
-                        </span>
-                        <span className="bg-slate-100 text-slate-500 px-4 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">
-                          {job.type}
-                        </span>
-                      </div>
-                    </div>
-                    <ChevronDown
-                      className="text-slate-300 group-open:rotate-180 transition-transform"
-                      size={24}
-                    />
-                  </summary>
-
-                  {job.description && (
-                    <div className="px-6 md:px-8 pb-8 pt-2">
-                      <p className="text-sm text-slate-500 leading-relaxed mb-6 font-medium">
-                        {job.description}
-                      </p>
-
-                      <div className="mb-6">
-                        <h4 className="font-black text-[#1A2E44] text-sm mb-3">
-                          Kualifikasi:
-                        </h4>
-                        <ul className="space-y-2">
-                          {job.qualifications?.map((q, i) => (
-                            <li
-                              key={i}
-                              className="text-sm text-slate-500 flex items-center gap-2 font-medium"
-                            >
-                              <span className="w-1.5 h-1.5 rounded-full bg-slate-400" />{" "}
-                              {q}
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-6 border-t border-slate-50">
-                        <div>
-                          <p className="text-sm font-black text-[#1A2E44]">
-                            Kirim CV kamu ke :
-                          </p>
-                          <p className="text-[#00AEEF] font-bold text-sm">
-                            careers@pikuland.com
-                          </p>
-                        </div>
-                        <p className="text-[11px] italic text-red-500 font-medium">
-                          *Lowongan Berakhir {job.deadline}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </details>
+                  job={job}
+                  defaultOpen={index === 0}
+                />
               ))}
             </div>
           </div>

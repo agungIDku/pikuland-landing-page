@@ -1,12 +1,16 @@
 import KarirPageClient from "@/components/KarirPageClient";
 import { fetchCareerContent } from "@/services/content/career";
+import { fetchCareersList } from "@/services/content/careers";
 
 export const dynamic = "force-dynamic";
 
 export default async function KarirPage() {
-  const careerContent = await fetchCareerContent();
+  const [careerContent, careerJobs] = await Promise.all([
+    fetchCareerContent(),
+    fetchCareersList(),
+  ]);
 
-  console.log(careerContent);
-
-  return <KarirPageClient content={careerContent} />;
+  return (
+    <KarirPageClient content={careerContent} jobs={careerJobs} />
+  );
 }
