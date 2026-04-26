@@ -10,6 +10,8 @@ import {
   formatSellingPriceIdr,
   type TicketingProduct,
 } from "@/services/ticketing/products";
+import { loadMidtransSnapScript, openSnapPayment } from "@/lib/midtransSnap";
+import { resolveSnapTokenFromCheckoutData } from "@/lib/resolveSnapToken";
 import {
   fetchCheckoutClient,
   fetchVisitsClient,
@@ -278,11 +280,37 @@ export default function TiketPageClient({
         qty_adult: String(counts.dewasa),
         total_payment: String(totalPembayaranRupiah),
       });
+      const snapToken = resolveSnapTokenFromCheckoutData(out);
+      const hasSnapClientKey = Boolean(
+        process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY?.trim(),
+      );
+
+      if (snapToken && hasSnapClientKey) {
+        try {
+          await loadMidtransSnapScript();
+          openSnapPayment(snapToken, {
+            onError: () => {
+              setCheckoutError(
+                "Pembayaran dibatalkan atau tidak dapat dilanjutkan.",
+              );
+            },
+          });
+          return;
+        } catch (snapErr) {
+          setCheckoutError(
+            snapErr instanceof Error
+              ? snapErr.message
+              : "Gagal membuka Midtrans Snap di halaman ini.",
+          );
+          return;
+        }
+      }
+
       if (out.redirect_url) {
         window.location.assign(out.redirect_url);
         return;
       }
-      setCheckoutError("Tidak ada alamat pembayaran.");
+      setCheckoutError("Tidak ada token Snap atau link pembayaran.");
     } catch (e) {
       setCheckoutError(
         e instanceof Error ? e.message : "Checkout gagal. Coba lagi.",

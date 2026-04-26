@@ -21,6 +21,9 @@ export type VisitsApiResponse = {
 
 export type CheckoutData = {
   midtrans_token?: string;
+  /** Beberapa respons memakai nama ini menggantikan `midtrans_token`. */
+  snap_token?: string;
+  token?: string;
   redirect_url?: string;
   order_id?: string;
 };
