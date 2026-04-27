@@ -52,6 +52,39 @@ function looksLikeHtml(s: string): boolean {
   return /<[^>]+>/.test(s);
 }
 
+function readStringField(
+  obj: unknown,
+  key: string,
+): string | null {
+  if (!obj || typeof obj !== "object") return null;
+  const v = (obj as Record<string, unknown>)[key];
+  return typeof v === "string" && v.trim() ? v.trim() : null;
+}
+
+/**
+ * Midtrans Snap kadang tidak otomatis melakukan redirect parent window
+ * setelah iframe selesai. Jadi kita fallback redirect manual ke halaman
+ * hasil transaksi.
+ */
+function resolveSnapSuccessRedirect(
+  snapResult: unknown,
+  fallbackOrderId: string | undefined,
+): string | null {
+  const finishUrl = readStringField(snapResult, "finish_redirect_url");
+  if (finishUrl) return finishUrl;
+
+  const orderId = readStringField(snapResult, "order_id") || fallbackOrderId;
+  if (!orderId) return null;
+
+  const params = new URLSearchParams();
+  params.set("order_id", orderId);
+  const statusCode = readStringField(snapResult, "status_code");
+  if (statusCode) params.set("status_code", statusCode);
+  const txStatus = readStringField(snapResult, "transaction_status");
+  if (txStatus) params.set("transaction_status", txStatus);
+  return `/transactions?${params.toString()}`;
+}
+
 function startOfLocalDay(d: Date): Date {
   return new Date(d.getFullYear(), d.getMonth(), d.getDate());
 }
@@ -318,6 +351,18 @@ export default function TiketPageClient({
         try {
           await loadMidtransSnapScript();
           openSnapPayment(snapToken, {
+            onSuccess: (result) => {
+              const target = resolveSnapSuccessRedirect(result, out.order_id);
+              if (target) {
+                window.location.assign(target);
+              }
+            },
+            onPending: (result) => {
+              const target = resolveSnapSuccessRedirect(result, out.order_id);
+              if (target) {
+                window.location.assign(target);
+              }
+            },
             onError: () => {
               setCheckoutError(
                 "Pembayaran dibatalkan atau tidak dapat dilanjutkan.",
