@@ -54,6 +54,8 @@ export async function fetchCheckoutClient(input: {
   qty_child: string;
   qty_adult: string;
   total_payment: string;
+  /** Tanggal kunjungan, format `YYYY-MM-DD` (lokal). */
+  visit_date: string;
 }): Promise<CheckoutApiResponse["data"]> {
   const res = await fetch("/api/ticketing/checkout", {
     method: "POST",

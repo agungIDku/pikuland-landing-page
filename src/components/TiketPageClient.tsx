@@ -135,10 +135,11 @@ export default function TiketPageClient({
   useEffect(() => {
     if (step === 1) {
       queueMicrotask(() => setSelectedDate(null));
-    }
-    if (step === 2) {
       setVisitDetail(null);
       setVisitsError(null);
+      setVisitsLoading(false);
+    }
+    if (step === 2) {
       setCheckoutError(null);
       const n = new Date();
       queueMicrotask(() => {
@@ -146,6 +147,41 @@ export default function TiketPageClient({
       });
     }
   }, [step]);
+
+  /** Panggil API visits saat langkah 2: tanggal atau tiket berubah → harga di atas ter-update. */
+  useEffect(() => {
+    if (step !== 2 || !selectedProduct || !selectedDate) {
+      if (step === 2 && !selectedDate) {
+        setVisitsLoading(false);
+      }
+      return;
+    }
+    let cancelled = false;
+    setVisitsLoading(true);
+    setVisitsError(null);
+    setVisitDetail(null);
+    void fetchVisitsClient({
+      date: formatDateParamForVisits(selectedDate),
+      article: selectedProduct.article,
+    })
+      .then((data) => {
+        if (!cancelled) setVisitDetail(data);
+      })
+      .catch((e) => {
+        if (!cancelled) {
+          setVisitDetail(null);
+          setVisitsError(
+            e instanceof Error ? e.message : "Gagal memuat detail harga.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setVisitsLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [step, selectedDate, selectedProduct]);
 
   const calYear = viewDate.getFullYear();
   const calMonthIndex = viewDate.getMonth();
@@ -222,35 +258,27 @@ export default function TiketPageClient({
     return Math.round(unit * headcountTotal);
   }, [visitDetail, headcountTotal]);
 
-  const handleLanjutPembayaran = async () => {
+  const handleLanjutPembayaran = () => {
     if (!selectedDate || !selectedProduct) {
       setVisitsError("Pilih tanggal kunjungan terlebih dahulu.");
+      return;
+    }
+    if (!visitDetail) {
+      setVisitsError(
+        "Tunggu sebentar hingga harga tanggal pilihan selesai dimuat.",
+      );
       return;
     }
     if (headcountTotal < 1) {
       setVisitsError("Jumlah pengunjung minimal 1.");
       return;
     }
-    setVisitsLoading(true);
     setVisitsError(null);
-    try {
-      const data = await fetchVisitsClient({
-        date: formatDateParamForVisits(selectedDate),
-        article: selectedProduct.article,
-      });
-      setVisitDetail(data);
-      setStep(3);
-    } catch (e) {
-      setVisitsError(
-        e instanceof Error ? e.message : "Gagal memuat detail harga.",
-      );
-    } finally {
-      setVisitsLoading(false);
-    }
+    setStep(3);
   };
 
   const handleBayarSekarang = async () => {
-    if (!visitDetail || !selectedProduct) return;
+    if (!visitDetail || !selectedProduct || !selectedDate) return;
     if (!custName.trim() || !custEmail.trim() || !custPhone.trim()) {
       setCheckoutError("Lengkapi nama, email, dan nomor telepon.");
       return;
@@ -279,6 +307,7 @@ export default function TiketPageClient({
         qty_child: String(counts.anak),
         qty_adult: String(counts.dewasa),
         total_payment: String(totalPembayaranRupiah),
+        visit_date: formatDateParamForVisits(selectedDate),
       });
       const snapToken = resolveSnapTokenFromCheckoutData(out);
       const hasSnapClientKey = Boolean(
@@ -558,9 +587,29 @@ export default function TiketPageClient({
                         {selectedProduct.article}
                       </p>
                     </div>
-                    <p className="text-xl font-black text-[#E5007E] tabular-nums">
-                      Rp {formatSellingPriceIdr(selectedProduct.selling_price)}
-                    </p>
+                    <div className="text-right min-w-0">
+                      <p className="text-xl font-black text-[#E5007E] tabular-nums">
+                        Rp{" "}
+                        {formatSellingPriceIdr(
+                          visitDetail?.selling_price ??
+                            selectedProduct.selling_price,
+                        )}
+                      </p>
+                      {selectedDate && visitsLoading ? (
+                        <p className="text-[10px] text-slate-500 font-medium mt-0.5">
+                          Memuat harga tanggal pilihan…
+                        </p>
+                      ) : null}
+                      {selectedDate &&
+                      visitDetail &&
+                      !visitsLoading &&
+                      visitDetail.selling_price !==
+                        selectedProduct.selling_price ? (
+                        <p className="text-[10px] text-amber-800/90 font-medium mt-0.5 max-w-[14rem] ml-auto">
+                          Harga disesuaikan untuk tanggal ini
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
                 ) : null}
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -793,11 +842,13 @@ export default function TiketPageClient({
                         disabled={
                           !selectedDate ||
                           visitsLoading ||
-                          headcountTotal < 1
+                          !visitDetail ||
+                          headcountTotal < 1 ||
+                          Boolean(visitsError)
                         }
                         className="flex-2 py-4 rounded-full font-black text-white bg-[#E5007E] shadow-xl shadow-pink-200 hover:brightness-110 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                       >
-                        {visitsLoading ? "Memuat…" : f.buttonSubmitLabel}
+                        {f.buttonSubmitLabel}
                       </button>
                     </div>
                   </div>
