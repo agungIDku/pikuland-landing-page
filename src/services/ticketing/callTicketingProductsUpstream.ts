@@ -39,6 +39,47 @@ async function postTicketingV1(
   return { status: res.status, body: text };
 }
 
+async function getTicketingV1(
+  pathAfterBase: string,
+): Promise<{ status: number; body: string }> {
+  const base = getBase();
+  const token = getToken();
+  if (!base || !token) {
+    return {
+      status: 500,
+      body: JSON.stringify({ error: "Ticketing API is not configured" }),
+    };
+  }
+  const path = pathAfterBase.replace(/^\//, "");
+  const url = `${base}/${path}`;
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/json",
+    },
+    cache: "no-store",
+  });
+  const text = await res.text();
+  return { status: res.status, body: text };
+}
+
+/**
+ * GET `…/transactions/{id}` (detail transaksi, Bearer auth).
+ */
+export async function callTransactionDetailUpstream(
+  transactionId: string,
+): Promise<{ status: number; body: string }> {
+  const id = String(transactionId).trim();
+  if (!id) {
+    return {
+      status: 400,
+      body: JSON.stringify({ error: "Missing transaction id" }),
+    };
+  }
+  return getTicketingV1(`transactions/${id}`);
+}
+
 /**
  * POSTs to the upstream `…/products` API (used by the Next route and RSC data loaders).
  * Returns raw `status` + `body` text.
