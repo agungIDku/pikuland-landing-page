@@ -26,6 +26,20 @@ export type CheckoutData = {
   token?: string;
   redirect_url?: string;
   order_id?: string;
+  /** Referensi booking di backend (mis. `TSACT-…`). */
+  tsact_doc?: string;
+  id?: number;
+};
+
+export type CustomersLookupData = {
+  child_name?: string[];
+};
+
+export type CustomersApiResponse = {
+  result: boolean;
+  code: number;
+  message: string;
+  data?: CustomersLookupData | null;
 };
 
 export type CheckoutApiResponse = {

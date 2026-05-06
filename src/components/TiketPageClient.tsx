@@ -10,10 +10,9 @@ import {
   formatSellingPriceIdr,
   type TicketingProduct,
 } from "@/services/ticketing/products";
-import { loadMidtransSnapScript, openSnapPayment } from "@/lib/midtransSnap";
-import { resolveSnapTokenFromCheckoutData } from "@/lib/resolveSnapToken";
 import {
   fetchCheckoutClient,
+  fetchCustomersChildNames,
   fetchVisitsClient,
   formatDateParamForVisits,
 } from "@/services/ticketing/visitsCheckoutClient";
@@ -30,7 +29,7 @@ import {
   Plus,
   Calendar as CalendarIcon,
   Users,
-  CreditCard,
+  CalendarCheck,
 } from "lucide-react";
 
 function ticketingAccent(color: string): { text: string; iconBg: string } {
@@ -50,39 +49,6 @@ function ticketingAccent(color: string): { text: string; iconBg: string } {
 
 function looksLikeHtml(s: string): boolean {
   return /<[^>]+>/.test(s);
-}
-
-function readStringField(
-  obj: unknown,
-  key: string,
-): string | null {
-  if (!obj || typeof obj !== "object") return null;
-  const v = (obj as Record<string, unknown>)[key];
-  return typeof v === "string" && v.trim() ? v.trim() : null;
-}
-
-/**
- * Midtrans Snap kadang tidak otomatis melakukan redirect parent window
- * setelah iframe selesai. Jadi kita fallback redirect manual ke halaman
- * hasil transaksi.
- */
-function resolveSnapSuccessRedirect(
-  snapResult: unknown,
-  fallbackOrderId: string | undefined,
-): string | null {
-  const finishUrl = readStringField(snapResult, "finish_redirect_url");
-  if (finishUrl) return finishUrl;
-
-  const orderId = readStringField(snapResult, "order_id") || fallbackOrderId;
-  if (!orderId) return null;
-
-  const params = new URLSearchParams();
-  params.set("order_id", orderId);
-  const statusCode = readStringField(snapResult, "status_code");
-  if (statusCode) params.set("status_code", statusCode);
-  const txStatus = readStringField(snapResult, "transaction_status");
-  if (txStatus) params.set("transaction_status", txStatus);
-  return `/transactions?${params.toString()}`;
 }
 
 function startOfLocalDay(d: Date): Date {
@@ -164,6 +130,12 @@ export default function TiketPageClient({
   const [custName, setCustName] = useState("");
   const [custEmail, setCustEmail] = useState("");
   const [custPhone, setCustPhone] = useState("");
+  const [childNames, setChildNames] = useState<string[]>([]);
+  /** Step 3 — kontak dulu, lalu nama anak + Booking. */
+  const [step3Phase, setStep3Phase] = useState<"contact" | "children">(
+    "contact",
+  );
+  const [selanjutnyaBusy, setSelanjutnyaBusy] = useState(false);
 
   useEffect(() => {
     if (step === 1) {
@@ -179,7 +151,20 @@ export default function TiketPageClient({
         setViewDate(new Date(n.getFullYear(), n.getMonth(), 1));
       });
     }
+    if (step === 3) {
+      setCheckoutError(null);
+      queueMicrotask(() => setStep3Phase("contact"));
+    }
   }, [step]);
+
+  useEffect(() => {
+    setChildNames((prev) => {
+      const n = counts.anak;
+      const next = prev.slice(0, n);
+      while (next.length < n) next.push("");
+      return next;
+    });
+  }, [counts.anak]);
 
   /** Panggil API visits saat langkah 2: tanggal atau tiket berubah → harga di atas ter-update. */
   useEffect(() => {
@@ -291,7 +276,7 @@ export default function TiketPageClient({
     return Math.round(unit * headcountTotal);
   }, [visitDetail, headcountTotal]);
 
-  const handleLanjutPembayaran = () => {
+  const handleLanjutBooking = () => {
     if (!selectedDate || !selectedProduct) {
       setVisitsError("Pilih tanggal kunjungan terlebih dahulu.");
       return;
@@ -310,14 +295,53 @@ export default function TiketPageClient({
     setStep(3);
   };
 
-  const handleBayarSekarang = async () => {
+  const handleSelanjutnyaKeNamaAnak = async () => {
+    setCheckoutError(null);
+    if (!custName.trim() || !custEmail.trim() || !custPhone.trim()) {
+      setCheckoutError("Lengkapi nama, email, dan nomor telepon.");
+      return;
+    }
+    const em = custEmail.trim();
+    if (em.length < 5 || !em.includes("@")) {
+      setCheckoutError("Isi email yang valid.");
+      return;
+    }
+    const digits = custPhone.replace(/\D/g, "");
+    if (digits.length < 10) {
+      setCheckoutError("Nomor telepon minimal 10 digit.");
+      return;
+    }
+    const n = counts.anak;
+    const phoneTrimmed = custPhone.trim();
+    setSelanjutnyaBusy(true);
+    try {
+      const names = await fetchCustomersChildNames(phoneTrimmed);
+      setChildNames(
+        Array.from({ length: n }, (_, i) => names[i]?.trim() ?? ""),
+      );
+      setStep3Phase("children");
+    } catch (e) {
+      setCheckoutError(
+        e instanceof Error ? e.message : "Gagal memuat riwayat pelanggan.",
+      );
+    } finally {
+      setSelanjutnyaBusy(false);
+    }
+  };
+
+  const handleKonfirmasiBooking = async () => {
     if (!visitDetail || !selectedProduct || !selectedDate) return;
     if (!custName.trim() || !custEmail.trim() || !custPhone.trim()) {
       setCheckoutError("Lengkapi nama, email, dan nomor telepon.");
       return;
     }
+    const kids = childNames.slice(0, counts.anak).map((s) => s.trim());
+    if (counts.anak > 0 && kids.some((name) => !name)) {
+      setCheckoutError("Isi nama lengkap untuk setiap pengunjung anak.");
+      return;
+    }
     if (totalPembayaranRupiah < 1) {
-      setCheckoutError("Total pembayaran tidak valid.");
+      setCheckoutError("Total tidak valid.");
       return;
     }
     const sku = (
@@ -341,50 +365,21 @@ export default function TiketPageClient({
         qty_adult: String(counts.dewasa),
         total_payment: String(totalPembayaranRupiah),
         visit_date: formatDateParamForVisits(selectedDate),
+        child_name: kids,
       });
-      const snapToken = resolveSnapTokenFromCheckoutData(out);
-      const hasSnapClientKey = Boolean(
-        process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY?.trim(),
-      );
-
-      if (snapToken && hasSnapClientKey) {
-        try {
-          await loadMidtransSnapScript();
-          openSnapPayment(snapToken, {
-            onSuccess: (result) => {
-              const target = resolveSnapSuccessRedirect(result, out.order_id);
-              if (target) {
-                window.location.assign(target);
-              }
-            },
-            onPending: (result) => {
-              const target = resolveSnapSuccessRedirect(result, out.order_id);
-              if (target) {
-                window.location.assign(target);
-              }
-            },
-            onError: () => {
-              setCheckoutError(
-                "Pembayaran dibatalkan atau tidak dapat dilanjutkan.",
-              );
-            },
-          });
-          return;
-        } catch (snapErr) {
-          setCheckoutError(
-            snapErr instanceof Error
-              ? snapErr.message
-              : "Gagal membuka Midtrans Snap di halaman ini.",
-          );
-          return;
-        }
-      }
-
-      if (out.redirect_url) {
-        window.location.assign(out.redirect_url);
+      const ref =
+        (typeof out.tsact_doc === "string" && out.tsact_doc.trim()) ||
+        (typeof out.order_id === "string" && out.order_id.trim()) ||
+        "";
+      if (ref) {
+        window.location.assign(
+          `/transactions?order_id=${encodeURIComponent(ref)}`,
+        );
         return;
       }
-      setCheckoutError("Tidak ada token Snap atau link pembayaran.");
+      setCheckoutError(
+        "Booking tercatat, tetapi nomor referensi tidak dikembalikan. Hubungi admin jika perlu.",
+      );
     } catch (e) {
       setCheckoutError(
         e instanceof Error ? e.message : "Checkout gagal. Coba lagi.",
@@ -443,7 +438,7 @@ export default function TiketPageClient({
               {step === 1
                 ? c.title
                 : step === 3
-                  ? "Pembayaran"
+                  ? "Booking"
                   : checkout.title}
             </h1>
             {step === 1 ? (
@@ -453,8 +448,8 @@ export default function TiketPageClient({
               />
             ) : step === 3 ? (
               <p className="text-slate-500 max-w-xl mx-auto font-medium leading-relaxed">
-                Periksa ringkasan, isi data kontak, lalu lanjut ke pembayaran
-                lewat payment gateway.
+                Periksa ringkasan pesanan, isi data kontak dan nama pengunjung
+                anak, lalu kirim booking Anda.
               </p>
             ) : (
               <div
@@ -883,7 +878,7 @@ export default function TiketPageClient({
                       </button>
                       <button
                         type="button"
-                        onClick={handleLanjutPembayaran}
+                        onClick={handleLanjutBooking}
                         disabled={
                           !selectedDate ||
                           visitsLoading ||
@@ -906,7 +901,7 @@ export default function TiketPageClient({
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 max-w-2xl mx-auto">
               <div className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-2xl border border-slate-100">
                 <div className="flex items-center gap-2 mb-8">
-                  <CreditCard className="text-pink-500" size={22} />
+                  <CalendarCheck className="text-pink-500" size={22} />
                   <h2 className="text-xl font-black text-[#1A2E44]">
                     {c.steps.step3Label}
                   </h2>
@@ -946,57 +941,124 @@ export default function TiketPageClient({
                 </div>
 
                 <div className="space-y-4 mb-8">
-                  <div>
-                    <label
-                      className="block text-xs font-bold text-slate-500 mb-1.5"
-                      htmlFor="tiket-cust-name"
-                    >
-                      Nama lengkap
-                    </label>
-                    <input
-                      id="tiket-cust-name"
-                      type="text"
-                      autoComplete="name"
-                      value={custName}
-                      onChange={(e) => setCustName(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-[#1A2E44] focus:outline-none focus:ring-2 focus:ring-pink-200"
-                      placeholder="Nama sesuai KTP / kartu"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      className="block text-xs font-bold text-slate-500 mb-1.5"
-                      htmlFor="tiket-cust-email"
-                    >
-                      Email
-                    </label>
-                    <input
-                      id="tiket-cust-email"
-                      type="email"
-                      autoComplete="email"
-                      value={custEmail}
-                      onChange={(e) => setCustEmail(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-[#1A2E44] focus:outline-none focus:ring-2 focus:ring-pink-200"
-                      placeholder="nama@email.com"
-                    />
-                  </div>
-                  <div>
-                    <label
-                      className="block text-xs font-bold text-slate-500 mb-1.5"
-                      htmlFor="tiket-cust-phone"
-                    >
-                      No. telepon
-                    </label>
-                    <input
-                      id="tiket-cust-phone"
-                      type="tel"
-                      autoComplete="tel"
-                      value={custPhone}
-                      onChange={(e) => setCustPhone(e.target.value)}
-                      className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-[#1A2E44] focus:outline-none focus:ring-2 focus:ring-pink-200"
-                      placeholder="08..."
-                    />
-                  </div>
+                  {step3Phase === "contact" ? (
+                    <>
+                      <div>
+                        <label
+                          className="block text-xs font-bold text-slate-500 mb-1.5"
+                          htmlFor="tiket-cust-name"
+                        >
+                          Nama lengkap
+                        </label>
+                        <input
+                          id="tiket-cust-name"
+                          type="text"
+                          autoComplete="name"
+                          value={custName}
+                          disabled={selanjutnyaBusy}
+                          onChange={(e) => setCustName(e.target.value)}
+                          className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-[#1A2E44] focus:outline-none focus:ring-2 focus:ring-pink-200 disabled:opacity-60"
+                          placeholder="Nama sesuai KTP / kartu"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          className="block text-xs font-bold text-slate-500 mb-1.5"
+                          htmlFor="tiket-cust-email"
+                        >
+                          Email
+                        </label>
+                        <input
+                          id="tiket-cust-email"
+                          type="email"
+                          autoComplete="email"
+                          value={custEmail}
+                          disabled={selanjutnyaBusy}
+                          onChange={(e) => setCustEmail(e.target.value)}
+                          className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-[#1A2E44] focus:outline-none focus:ring-2 focus:ring-pink-200 disabled:opacity-60"
+                          placeholder="nama@email.com"
+                        />
+                      </div>
+                      <div>
+                        <label
+                          className="block text-xs font-bold text-slate-500 mb-1.5"
+                          htmlFor="tiket-cust-phone"
+                        >
+                          No. telepon
+                        </label>
+                        <input
+                          id="tiket-cust-phone"
+                          type="tel"
+                          autoComplete="tel"
+                          value={custPhone}
+                          disabled={selanjutnyaBusy}
+                          onChange={(e) => setCustPhone(e.target.value)}
+                          className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-[#1A2E44] focus:outline-none focus:ring-2 focus:ring-pink-200 disabled:opacity-60"
+                          placeholder="08..."
+                        />
+                        <p className="text-[11px] text-slate-400 mt-1.5 font-medium leading-snug">
+                          Tekan Selanjutnya untuk memuat riwayat nama anak
+                          (jika ada) dan menampilkan form nama pengunjung anak.
+                        </p>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="rounded-2xl border border-slate-100 bg-slate-50/60 px-4 py-3 text-sm">
+                        <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">
+                          Data kontak
+                        </p>
+                        <p className="font-medium text-[#1A2E44]">
+                          {custName.trim()}
+                        </p>
+                        <p className="text-slate-600">{custEmail.trim()}</p>
+                        <p className="text-slate-600">{custPhone.trim()}</p>
+                      </div>
+                      {counts.anak > 0 ? (
+                        <div className="space-y-3 pt-1 border-t border-slate-100">
+                          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                            Nama pengunjung anak
+                          </p>
+                          <p className="text-[11px] text-slate-400 font-medium leading-snug -mt-1">
+                            Nama terisi otomatis dari riwayat sesuai urutan
+                            array di server (maks. sesuai jumlah tiket anak).
+                            Boleh diubah manual.
+                          </p>
+                          {Array.from({ length: counts.anak }, (_, i) => (
+                            <div key={`child-${i}`}>
+                              <label
+                                className="block text-xs font-bold text-slate-500 mb-1.5"
+                                htmlFor={`tiket-child-${i}`}
+                              >
+                                Nama anak {i + 1}
+                              </label>
+                              <input
+                                id={`tiket-child-${i}`}
+                                type="text"
+                                autoComplete="name"
+                                value={childNames[i] ?? ""}
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  setChildNames((prev) => {
+                                    const next = [...prev];
+                                    next[i] = v;
+                                    return next;
+                                  });
+                                }}
+                                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-[#1A2E44] focus:outline-none focus:ring-2 focus:ring-pink-200"
+                                placeholder={`Nama anak ${i + 1}`}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-sm text-slate-500 font-medium pt-2">
+                          Tidak ada tiket anak pada pesanan ini. Lanjutkan
+                          dengan Booking.
+                        </p>
+                      )}
+                    </>
+                  )}
                 </div>
 
                 {checkoutError ? (
@@ -1011,19 +1073,38 @@ export default function TiketPageClient({
                 <div className="flex flex-col sm:flex-row gap-4">
                   <button
                     type="button"
-                    onClick={() => setStep(2)}
-                    className="sm:flex-1 py-4 rounded-full font-black text-slate-400 border-2 border-slate-100 hover:bg-slate-50 flex items-center justify-center gap-2"
+                    onClick={() =>
+                      step3Phase === "contact"
+                        ? setStep(2)
+                        : setStep3Phase("contact")
+                    }
+                    disabled={
+                      (step3Phase === "contact" && selanjutnyaBusy) ||
+                      checkoutLoading
+                    }
+                    className="sm:flex-1 py-4 rounded-full font-black text-slate-400 border-2 border-slate-100 hover:bg-slate-50 flex items-center justify-center gap-2 disabled:opacity-50"
                   >
                     <ChevronLeft size={20} /> Kembali
                   </button>
-                  <button
-                    type="button"
-                    onClick={handleBayarSekarang}
-                    disabled={checkoutLoading}
-                    className="sm:flex-[2] py-4 rounded-full font-black text-white bg-[#E5007E] shadow-xl shadow-pink-200 hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {checkoutLoading ? "Memproses…" : "Bayar sekarang"}
-                  </button>
+                  {step3Phase === "contact" ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleSelanjutnyaKeNamaAnak()}
+                      disabled={selanjutnyaBusy}
+                      className="sm:flex-[2] py-4 rounded-full font-black text-white bg-[#E5007E] shadow-xl shadow-pink-200 hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {selanjutnyaBusy ? "Memuat…" : "Selanjutnya"}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleKonfirmasiBooking}
+                      disabled={checkoutLoading}
+                      className="sm:flex-[2] py-4 rounded-full font-black text-white bg-[#E5007E] shadow-xl shadow-pink-200 hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {checkoutLoading ? "Memproses…" : "Booking"}
+                    </button>
+                  )}
                 </div>
               </div>
             </div>

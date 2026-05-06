@@ -1,5 +1,6 @@
 "use client";
 
+import TsactQrCode from "@/components/transactions/TsactQrCode";
 import {
   AlertCircle,
   Calendar,
@@ -14,9 +15,9 @@ import {
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
-/** Clears the fixed `Navbar` (≈88px) so page content is not covered. */
-const MAIN_WITH_NAV_OFFSET =
-  "min-h-dvh bg-[var(--color-cream)] text-[#1a1a2e] pt-[88px]";
+/** Halaman transaksi tanpa Navbar global — padding atas ringkas saja. */
+const MAIN_LAYOUT_CLASS =
+  "min-h-dvh bg-[var(--color-cream)] text-[#1a1a2e] pt-6 sm:pt-10";
 
 type TransactionRow = {
   id?: number;
@@ -28,6 +29,8 @@ type TransactionRow = {
   sku?: string | null;
   qty_adult?: number;
   qty_child?: number;
+  /** Dari API checkout / detail transaksi (`child_name` JSON array). */
+  child_name?: string[] | string | null;
   total_payment?: number;
   status?: string | null;
   notes?: string | null;
@@ -76,6 +79,34 @@ function looksLikeTransactionRow(x: Record<string, unknown>): boolean {
     typeof x.cust_name === "string" ||
     x.total_payment != null
   );
+}
+
+/** Normalisasi nama anak dari respons API (array, JSON string, atau dipisah koma). */
+function childNamesFromTransactionRow(row: TransactionRow): string[] {
+  const raw = row.child_name;
+  if (Array.isArray(raw)) {
+    return raw
+      .filter((x): x is string => typeof x === "string")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  }
+  if (typeof raw === "string") {
+    const t = raw.trim();
+    if (!t) return [];
+    try {
+      const parsed = JSON.parse(t) as unknown;
+      if (Array.isArray(parsed)) {
+        return parsed
+          .filter((x): x is string => typeof x === "string")
+          .map((s) => s.trim())
+          .filter(Boolean);
+      }
+    } catch {
+      /* bukan JSON */
+    }
+    return t.split(",").map((s) => s.trim()).filter(Boolean);
+  }
+  return [];
 }
 
 function formatIdrRupiah(n: number | null | undefined): string {
@@ -203,7 +234,7 @@ export default function TransactionsClient() {
 
   if (!orderId) {
     return (
-      <main className={MAIN_WITH_NAV_OFFSET}>
+      <main className={MAIN_LAYOUT_CLASS}>
         <div className="mx-auto max-w-lg px-4 py-8 sm:px-6 sm:py-10">
           <h1 className="text-2xl font-bold text-[#1A2A44] sm:text-3xl">
             Transaksi
@@ -224,10 +255,10 @@ export default function TransactionsClient() {
   }
 
   return (
-    <main className={MAIN_WITH_NAV_OFFSET}>
-      <div className="mx-auto max-w-lg px-4 py-6 sm:px-6 sm:py-8">
-        <h1 className="text-2xl font-bold text-[#1A2A44] sm:text-3xl">
-          Detail transaksi
+    <main className={MAIN_LAYOUT_CLASS}>
+      <div className="mx-auto max-w-lg px-4 pb-6 sm:px-6 sm:py-8">
+        <h1 className="text-2xl font-bold text-[#1A2A44] sm:text-3xl text-center">
+          Detail booking
         </h1>
 
         {loading ? (
@@ -251,9 +282,18 @@ export default function TransactionsClient() {
           <div className="mt-6 space-y-4">
             <div className="rounded-2xl border-4 border-white bg-white/90 p-4 shadow-sm sm:p-5">
               <p className="text-slate-500 text-xs">Nomor transaksi</p>
-              <p className="mt-0.5 font-mono text-sm font-semibold break-all text-[#1A2A44]">
+              <p className="mt-0.5 font-mono text-sm font-semibold break-all text-[#1A2E44]">
                 {refNo}
               </p>
+              {refNo.trim() ? (
+                <div className="mt-5 border-t border-slate-100">
+                  
+                  <TsactQrCode
+                    value={row.tsact_doc?.trim() || orderId.trim()}
+                    
+                  />
+                </div>
+              ) : null}
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
@@ -276,6 +316,76 @@ export default function TransactionsClient() {
                 </span>
               )}
             </div>
+
+            <section
+              className="rounded-2xl border-4 border-white bg-white/90 p-4 shadow-sm sm:p-5"
+              aria-label="Tiket & kunjungan"
+            >
+              <h2 className="mb-3 flex items-center gap-2 font-semibold text-[#1A2A44] text-sm sm:text-base">
+                <Ticket className="h-4 w-4 text-[#00AEEF]" aria-hidden />
+                Tiket & kunjungan
+              </h2>
+              <dl className="space-y-2.5 text-sm">
+                <div>
+                  <dt className="text-slate-500 text-xs">SKU</dt>
+                  <dd className="flex items-center gap-1.5 font-mono font-medium text-[#1a1a2e]">
+                    <Package className="h-3.5 w-3.5 text-slate-400" aria-hidden />
+                    {row.sku?.trim() || "—"}
+                  </dd>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <dt className="text-slate-500 text-xs">Dewasa</dt>
+                    <dd className="font-semibold text-lg tabular-nums">
+                      {row.qty_adult ?? 0}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-500 text-xs">Anak</dt>
+                    <dd className="font-semibold text-lg tabular-nums">
+                      {row.qty_child ?? 0}
+                    </dd>
+                  </div>
+                </div>
+                {(() => {
+                  const names = childNamesFromTransactionRow(row);
+                  if (names.length === 0) return null;
+                  return (
+                    <div>
+                      <dt className="text-slate-500 text-xs">
+                        Nama pengunjung anak
+                      </dt>
+                      <dd className="mt-1.5">
+                        <ol className="list-decimal space-y-1 pl-4 font-medium text-[#1a1a2e] marker:text-slate-400">
+                          {names.map((name, i) => (
+                            <li key={`${i}-${name}`} className="pl-1">
+                              {name}
+                            </li>
+                          ))}
+                        </ol>
+                      </dd>
+                    </div>
+                  );
+                })()}
+                <div>
+                  <dt className="flex items-center gap-1.5 text-slate-500 text-xs">
+                    <Calendar className="h-3 w-3" aria-hidden />
+                    Tanggal kunjungan
+                  </dt>
+                  <dd className="mt-0.5 font-medium text-[#1a1a2e] leading-snug">
+                    {formatIdDateOnly(row.visit_date ?? undefined)}
+                  </dd>
+                </div>
+                {row.notes ? (
+                  <div>
+                    <dt className="text-slate-500 text-xs">Catatan</dt>
+                    <dd className="whitespace-pre-wrap text-[#1a1a2e]">
+                      {row.notes}
+                    </dd>
+                  </div>
+                ) : null}
+              </dl>
+            </section>
 
             <section
               className="rounded-2xl border-4 border-white bg-white/90 p-4 shadow-sm sm:p-5"
@@ -318,56 +428,6 @@ export default function TransactionsClient() {
                     )}
                   </dd>
                 </div>
-              </dl>
-            </section>
-
-            <section
-              className="rounded-2xl border-4 border-white bg-white/90 p-4 shadow-sm sm:p-5"
-              aria-label="Tiket & kunjungan"
-            >
-              <h2 className="mb-3 flex items-center gap-2 font-semibold text-[#1A2A44] text-sm sm:text-base">
-                <Ticket className="h-4 w-4 text-[#00AEEF]" aria-hidden />
-                Tiket & kunjungan
-              </h2>
-              <dl className="space-y-2.5 text-sm">
-                <div>
-                  <dt className="text-slate-500 text-xs">SKU</dt>
-                  <dd className="flex items-center gap-1.5 font-mono font-medium text-[#1a1a2e]">
-                    <Package className="h-3.5 w-3.5 text-slate-400" aria-hidden />
-                    {row.sku?.trim() || "—"}
-                  </dd>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <dt className="text-slate-500 text-xs">Dewasa</dt>
-                    <dd className="font-semibold text-lg tabular-nums">
-                      {row.qty_adult ?? 0}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-slate-500 text-xs">Anak</dt>
-                    <dd className="font-semibold text-lg tabular-nums">
-                      {row.qty_child ?? 0}
-                    </dd>
-                  </div>
-                </div>
-                <div>
-                  <dt className="flex items-center gap-1.5 text-slate-500 text-xs">
-                    <Calendar className="h-3 w-3" aria-hidden />
-                    Tanggal kunjungan
-                  </dt>
-                  <dd className="mt-0.5 font-medium text-[#1a1a2e] leading-snug">
-                    {formatIdDateOnly(row.visit_date ?? undefined)}
-                  </dd>
-                </div>
-                {row.notes ? (
-                  <div>
-                    <dt className="text-slate-500 text-xs">Catatan</dt>
-                    <dd className="whitespace-pre-wrap text-[#1a1a2e]">
-                      {row.notes}
-                    </dd>
-                  </div>
-                ) : null}
               </dl>
             </section>
 

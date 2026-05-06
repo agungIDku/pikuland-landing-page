@@ -1,10 +1,11 @@
 import "server-only";
 
+import { callTicketingProductsUpstream } from "./callTicketingProductsUpstream";
 import {
-  callTicketingProductsUpstream,
-  parseTicketingProductsResponse,
-} from "./callTicketingProductsUpstream";
-import { sortTicketingProducts, type TicketingProduct } from "./products";
+  parseAndNormalizeTicketingProductsBody,
+  sortTicketingProducts,
+  type TicketingProduct,
+} from "./products";
 
 export type LoadTicketingProductsResult = {
   products: TicketingProduct[];
@@ -29,23 +30,22 @@ export async function loadTicketingProductsForPage(): Promise<LoadTicketingProdu
   }
 
   if (status < 200 || status >= 300) {
+    const fallback = parseAndNormalizeTicketingProductsBody(body);
     return {
       products: [],
-      error: `Gagal memuat daftar tiket (${status}).`,
+      error:
+        fallback.error ||
+        `Gagal memuat daftar tiket (${status}). Periksa URL API dan token di env.`,
     };
   }
 
-  const parsed = parseTicketingProductsResponse(body);
-  if (!parsed) {
-    return { products: [], error: "Respon tiket tidak valid." };
-  }
-
-  if (!Array.isArray(parsed.data)) {
-    return { products: [], error: null };
+  const { products, error } = parseAndNormalizeTicketingProductsBody(body);
+  if (error) {
+    return { products: [], error };
   }
 
   return {
-    products: sortTicketingProducts(parsed.data),
+    products: sortTicketingProducts(products),
     error: null,
   };
 }

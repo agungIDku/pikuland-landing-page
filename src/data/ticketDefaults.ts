@@ -30,7 +30,7 @@ export const TICKET_PAGE_FALLBACK: TicketContent = {
   steps: {
     step1Label: "Pilih Tiket",
     step2Label: "Pilih Tanggal",
-    step3Label: "Bayar",
+    step3Label: "Booking",
   },
   ticketCheckoutPage: {
     title: "Kapan Mau Main?",
@@ -50,7 +50,7 @@ export const TICKET_PAGE_FALLBACK: TicketContent = {
         detailInfo: "Usia 17+ Tahun",
       },
       buttonBackLabel: "Kembali",
-      buttonSubmitLabel: "Lanjut Pembayaran",
+      buttonSubmitLabel: "Lanjut booking",
       ticketInformation: "",
     },
   },

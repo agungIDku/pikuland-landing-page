@@ -1,5 +1,6 @@
 import type {
   CheckoutApiResponse,
+  CustomersApiResponse,
   VisitsApiResponse,
   VisitsData,
 } from "./visitsCheckoutTypes";
@@ -46,6 +47,62 @@ export async function fetchVisitsClient(input: {
   return json.data;
 }
 
+function parseChildNamesFromCustomersJson(
+  json: CustomersApiResponse,
+): string[] {
+  const raw = json.data?.child_name;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .filter((x): x is string => typeof x === "string")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Riwayat nama anak untuk nomor telepon (POST `/customers`).
+ * HTTP 404 / `result: false` dengan `child_name: []` → array kosong (bukan throw).
+ */
+export async function fetchCustomersChildNames(
+  phone: string,
+): Promise<string[]> {
+  const res = await fetch("/api/ticketing/customers", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ phone: phone.trim() }),
+    cache: "no-store",
+  });
+  const text = await res.text();
+  let json: CustomersApiResponse | null = null;
+  try {
+    json = text ? (JSON.parse(text) as CustomersApiResponse) : null;
+  } catch {
+    throw new Error(`Respons pelanggan tidak valid (${res.status})`);
+  }
+  if (!json) {
+    if (!res.ok) {
+      throw new Error(`Gagal memuat riwayat pelanggan (${res.status})`);
+    }
+    return [];
+  }
+
+  const names = parseChildNamesFromCustomersJson(json);
+
+  if (res.ok) {
+    return names;
+  }
+
+  if (res.status === 404 || res.status === 400 || res.status === 422) {
+    return names;
+  }
+
+  throw new Error(
+    json.message || `Gagal memuat riwayat pelanggan (${res.status})`,
+  );
+}
+
 export async function fetchCheckoutClient(input: {
   cust_name: string;
   email: string;
@@ -56,6 +113,7 @@ export async function fetchCheckoutClient(input: {
   total_payment: string;
   /** Tanggal kunjungan, format `YYYY-MM-DD` (lokal). */
   visit_date: string;
+  child_name: string[];
 }): Promise<CheckoutApiResponse["data"]> {
   const res = await fetch("/api/ticketing/checkout", {
     method: "POST",

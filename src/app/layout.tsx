@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Fredoka } from "next/font/google";
 import Footer from "@/components/Footer";
-import Navbar from "@/components/Navbar";
+import ConditionalNavbar from "@/components/ConditionalNavbar";
 import { fetchFooterContent } from "@/services/content/footer";
 import { fetchMenuContent } from "@/services/content/menu";
 import { getLang } from "@/services/lang";
@@ -50,7 +50,7 @@ export default async function RootLayout({
   return (
     <html lang={lang}>
       <body className={`${fredoka.variable} antialiased`}>
-        <Navbar
+        <ConditionalNavbar
           menu={menuPage?.menu}
           navCta={menuPage?.navCta}
           logoUrl={menuPage?.logoUrl}
