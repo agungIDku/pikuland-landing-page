@@ -97,6 +97,26 @@ export default function TiketPageClient({
   const c = content ?? TICKET_PAGE_FALLBACK;
   const checkout = c.ticketCheckoutPage;
   const f = checkout.form;
+  const msg = c.formMessages;
+  const bc = c.bookingContactForm;
+  const br = c.bookingReview;
+  const cal = c.calendar;
+  const pc = c.productCards;
+  const st = c.selectedTicket;
+  const ba = c.bookingActions;
+
+  const weekdayHeaders = useMemo(
+    () => [
+      cal.weekdays.sun,
+      cal.weekdays.mon,
+      cal.weekdays.tue,
+      cal.weekdays.wed,
+      cal.weekdays.thu,
+      cal.weekdays.fri,
+      cal.weekdays.sat,
+    ],
+    [cal.weekdays],
+  );
 
   const visitorRows = [
     {
@@ -189,7 +209,7 @@ export default function TiketPageClient({
         if (!cancelled) {
           setVisitDetail(null);
           setVisitsError(
-            e instanceof Error ? e.message : "Gagal memuat detail harga.",
+            e instanceof Error ? e.message : msg.visitsLoadFailed,
           );
         }
       })
@@ -199,7 +219,7 @@ export default function TiketPageClient({
     return () => {
       cancelled = true;
     };
-  }, [step, selectedDate, selectedProduct]);
+  }, [step, selectedDate, selectedProduct, msg.visitsLoadFailed]);
 
   const calYear = viewDate.getFullYear();
   const calMonthIndex = viewDate.getMonth();
@@ -278,17 +298,15 @@ export default function TiketPageClient({
 
   const handleLanjutBooking = () => {
     if (!selectedDate || !selectedProduct) {
-      setVisitsError("Pilih tanggal kunjungan terlebih dahulu.");
+      setVisitsError(msg.selectVisitDateFirst);
       return;
     }
     if (!visitDetail) {
-      setVisitsError(
-        "Tunggu sebentar hingga harga tanggal pilihan selesai dimuat.",
-      );
+      setVisitsError(msg.waitForPriceLoad);
       return;
     }
     if (headcountTotal < 1) {
-      setVisitsError("Jumlah pengunjung minimal 1.");
+      setVisitsError(msg.minVisitorsOne);
       return;
     }
     setVisitsError(null);
@@ -298,17 +316,17 @@ export default function TiketPageClient({
   const handleSelanjutnyaKeNamaAnak = async () => {
     setCheckoutError(null);
     if (!custName.trim() || !custEmail.trim() || !custPhone.trim()) {
-      setCheckoutError("Lengkapi nama, email, dan nomor telepon.");
+      setCheckoutError(msg.fillContactFields);
       return;
     }
     const em = custEmail.trim();
     if (em.length < 5 || !em.includes("@")) {
-      setCheckoutError("Isi email yang valid.");
+      setCheckoutError(msg.validEmail);
       return;
     }
     const digits = custPhone.replace(/\D/g, "");
     if (digits.length < 10) {
-      setCheckoutError("Nomor telepon minimal 10 digit.");
+      setCheckoutError(msg.phoneMinDigits);
       return;
     }
     const n = counts.anak;
@@ -322,7 +340,7 @@ export default function TiketPageClient({
       setStep3Phase("children");
     } catch (e) {
       setCheckoutError(
-        e instanceof Error ? e.message : "Gagal memuat riwayat pelanggan.",
+        e instanceof Error ? e.message : msg.customerHistoryFailed,
       );
     } finally {
       setSelanjutnyaBusy(false);
@@ -332,16 +350,16 @@ export default function TiketPageClient({
   const handleKonfirmasiBooking = async () => {
     if (!visitDetail || !selectedProduct || !selectedDate) return;
     if (!custName.trim() || !custEmail.trim() || !custPhone.trim()) {
-      setCheckoutError("Lengkapi nama, email, dan nomor telepon.");
+      setCheckoutError(msg.fillContactFields);
       return;
     }
     const kids = childNames.slice(0, counts.anak).map((s) => s.trim());
     if (counts.anak > 0 && kids.some((name) => !name)) {
-      setCheckoutError("Isi nama lengkap untuk setiap pengunjung anak.");
+      setCheckoutError(msg.fillEachChildName);
       return;
     }
     if (totalPembayaranRupiah < 1) {
-      setCheckoutError("Total tidak valid.");
+      setCheckoutError(msg.invalidTotal);
       return;
     }
     const sku = (
@@ -350,7 +368,7 @@ export default function TiketPageClient({
       selectedProduct.article
     ).trim();
     if (!sku) {
-      setCheckoutError("SKU / artikel tidak tersedia.");
+      setCheckoutError(msg.skuMissing);
       return;
     }
     setCheckoutLoading(true);
@@ -377,12 +395,10 @@ export default function TiketPageClient({
         );
         return;
       }
-      setCheckoutError(
-        "Booking tercatat, tetapi nomor referensi tidak dikembalikan. Hubungi admin jika perlu.",
-      );
+      setCheckoutError(msg.bookingNoReference);
     } catch (e) {
       setCheckoutError(
-        e instanceof Error ? e.message : "Checkout gagal. Coba lagi.",
+        e instanceof Error ? e.message : msg.checkoutFailed,
       );
     } finally {
       setCheckoutLoading(false);
@@ -438,7 +454,7 @@ export default function TiketPageClient({
               {step === 1
                 ? c.title
                 : step === 3
-                  ? "Booking"
+                  ? c.steps.step3Label
                   : checkout.title}
             </h1>
             {step === 1 ? (
@@ -447,10 +463,12 @@ export default function TiketPageClient({
                 dangerouslySetInnerHTML={{ __html: c.description }}
               />
             ) : step === 3 ? (
-              <p className="text-slate-500 max-w-xl mx-auto font-medium leading-relaxed">
-                Periksa ringkasan pesanan, isi data kontak dan nama pengunjung
-                anak, lalu kirim booking Anda.
-              </p>
+              <div
+                className="text-slate-500 max-w-xl mx-auto font-medium leading-relaxed [&_p]:mb-0"
+                dangerouslySetInnerHTML={{
+                  __html: c.step3Intro.description,
+                }}
+              />
             ) : (
               <div
                 className="text-slate-500 max-w-xl mx-auto font-medium leading-relaxed [&_p]:mb-0"
@@ -520,7 +538,7 @@ export default function TiketPageClient({
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto mb-20">
                 {products.length === 0 && !productsError ? (
                   <div className="col-span-full text-center py-12 text-slate-500 font-medium">
-                    Belum ada tiket yang tersedia saat ini.
+                    {pc.emptyMessage}
                   </div>
                 ) : null}
 
@@ -550,7 +568,8 @@ export default function TiketPageClient({
                             />
                           </div>
                           <h3 className="text-xl font-black text-[#1A2E44] mb-1">
-                            {p.article_desc || `Tiket #${p.id}`}
+                            {p.article_desc ||
+                              `${pc.productFallbackPrefix} #${p.id}`}
                           </h3>
                           <div className="mb-8">
                             <span
@@ -559,7 +578,7 @@ export default function TiketPageClient({
                               Rp {priceLabel}
                             </span>
                             <span className="text-slate-400 text-sm font-medium block mt-1">
-                              Harga jual
+                              {pc.sellingPriceLabel}
                             </span>
                           </div>
                           <button
@@ -618,7 +637,7 @@ export default function TiketPageClient({
                   <div className="mb-8 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-pink-100 bg-linear-to-r from-pink-50/90 to-white px-5 py-4">
                     <div>
                       <p className="text-[10px] font-bold uppercase tracking-wider text-pink-600/80">
-                        Tiket terpilih
+                        {st.caption}
                       </p>
                       <p className="text-lg font-black text-[#1A2E44]">
                         {selectedProduct.article_desc}
@@ -637,7 +656,7 @@ export default function TiketPageClient({
                       </p>
                       {selectedDate && visitsLoading ? (
                         <p className="text-[10px] text-slate-500 font-medium mt-0.5">
-                          Memuat harga tanggal pilihan…
+                          {st.loadingPriceHint}
                         </p>
                       ) : null}
                       {selectedDate &&
@@ -646,7 +665,7 @@ export default function TiketPageClient({
                       visitDetail.selling_price !==
                         selectedProduct.selling_price ? (
                         <p className="text-[10px] text-amber-800/90 font-medium mt-0.5 max-w-[14rem] ml-auto">
-                          Harga disesuaikan untuk tanggal ini
+                          {st.priceAdjustedHint}
                         </p>
                       ) : null}
                     </div>
@@ -684,7 +703,7 @@ export default function TiketPageClient({
                             type="button"
                             onClick={goPrevMonth}
                             className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400"
-                            aria-label="Bulan sebelumnya"
+                            aria-label={cal.prevMonthAria}
                           >
                             <ChevronLeft size={20} />
                           </button>
@@ -692,18 +711,16 @@ export default function TiketPageClient({
                             type="button"
                             onClick={goNextMonth}
                             className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400"
-                            aria-label="Bulan berikutnya"
+                            aria-label={cal.nextMonthAria}
                           >
                             <ChevronRight size={20} />
                           </button>
                         </div>
                       </div>
                       <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-slate-400 uppercase tracking-tighter mb-4">
-                        {["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"].map(
-                          (d) => (
-                            <div key={d}>{d}</div>
-                          ),
-                        )}
+                        {weekdayHeaders.map((d, i) => (
+                          <div key={`wd-${i}`}>{d}</div>
+                        ))}
                       </div>
                       <div className="grid grid-cols-7 gap-1">
                         {calendar.cells.map((day, idx) => {
@@ -758,9 +775,7 @@ export default function TiketPageClient({
                               onClick={() => setSelectedDate(cellDate)}
                               aria-pressed={isSelected}
                               title={
-                                isHolidate
-                                  ? "Hari khusus — harga dapat berbeda"
-                                  : undefined
+                                isHolidate ? cal.holidayTooltip : undefined
                               }
                               className={[
                                 "relative aspect-square flex items-center justify-center rounded-full text-sm font-bold transition-colors",
@@ -790,18 +805,18 @@ export default function TiketPageClient({
                         })}
                       </div>
                       {holidateKeySet.size > 0 ? (
-                        <p className="mt-4 text-[10px] text-amber-900/80 font-medium leading-snug flex items-start gap-2">
+                        <div className="mt-4 text-[10px] text-amber-900/80 font-medium leading-snug flex items-start gap-2">
                           <span
                             className="mt-0.5 inline-flex h-2.5 w-2.5 shrink-0 rounded-full bg-amber-400 ring-2 ring-amber-200"
                             aria-hidden
                           />
-                          <span>
-                            Tanggal ber-tanda: hari khusus (bisa hari libur
-                            nasional atau{" "}
-                            <span className="font-bold">tarif berbeda</span>).
-                            Pilih tanggal untuk melanjutkan.
-                          </span>
-                        </p>
+                          <span
+                            className="min-w-0 [&_p]:mb-0 [&_strong]:font-bold"
+                            dangerouslySetInnerHTML={{
+                              __html: cal.holidayLegend,
+                            }}
+                          />
+                        </div>
                       ) : null}
                     </div>
                     <div className="mt-4 p-4 bg-yellow-50 rounded-2xl border border-yellow-100 flex gap-3 items-start">
@@ -918,15 +933,16 @@ export default function TiketPageClient({
                     <p className="text-slate-600">{visitDetail.description}</p>
                   ) : null}
                   <p className="text-slate-500">
-                    Tanggal:{" "}
+                    {br.datePrefix}{" "}
                     <span className="font-bold text-[#1A2E44]">
                       {formatIdDateLong(selectedDate)}
                     </span>
                   </p>
                   <p className="text-slate-500">
-                    Pengunjung:{" "}
+                    {br.visitorsPrefix}{" "}
                     <span className="font-bold text-[#1A2E44]">
-                      {headcountTotal} (anak {counts.anak}, dewasa {counts.dewasa})
+                      {headcountTotal} ({br.childWord} {counts.anak},{" "}
+                      {br.adultWord} {counts.dewasa})
                     </span>
                   </p>
                   <div className="pt-2 border-t border-slate-200/80 flex flex-wrap justify-between gap-2 text-[#1A2E44]">
@@ -948,7 +964,7 @@ export default function TiketPageClient({
                           className="block text-xs font-bold text-slate-500 mb-1.5"
                           htmlFor="tiket-cust-name"
                         >
-                          Nama lengkap
+                          {bc.fullNameLabel}
                         </label>
                         <input
                           id="tiket-cust-name"
@@ -958,7 +974,7 @@ export default function TiketPageClient({
                           disabled={selanjutnyaBusy}
                           onChange={(e) => setCustName(e.target.value)}
                           className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-[#1A2E44] focus:outline-none focus:ring-2 focus:ring-pink-200 disabled:opacity-60"
-                          placeholder="Nama sesuai KTP / kartu"
+                          placeholder={bc.fullNamePlaceholder}
                         />
                       </div>
                       <div>
@@ -966,7 +982,7 @@ export default function TiketPageClient({
                           className="block text-xs font-bold text-slate-500 mb-1.5"
                           htmlFor="tiket-cust-email"
                         >
-                          Email
+                          {bc.emailLabel}
                         </label>
                         <input
                           id="tiket-cust-email"
@@ -976,7 +992,7 @@ export default function TiketPageClient({
                           disabled={selanjutnyaBusy}
                           onChange={(e) => setCustEmail(e.target.value)}
                           className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-[#1A2E44] focus:outline-none focus:ring-2 focus:ring-pink-200 disabled:opacity-60"
-                          placeholder="nama@email.com"
+                          placeholder={bc.emailPlaceholder}
                         />
                       </div>
                       <div>
@@ -984,7 +1000,7 @@ export default function TiketPageClient({
                           className="block text-xs font-bold text-slate-500 mb-1.5"
                           htmlFor="tiket-cust-phone"
                         >
-                          No. telepon
+                          {bc.phoneLabel}
                         </label>
                         <input
                           id="tiket-cust-phone"
@@ -994,11 +1010,10 @@ export default function TiketPageClient({
                           disabled={selanjutnyaBusy}
                           onChange={(e) => setCustPhone(e.target.value)}
                           className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-[#1A2E44] focus:outline-none focus:ring-2 focus:ring-pink-200 disabled:opacity-60"
-                          placeholder="08..."
+                          placeholder={bc.phonePlaceholder}
                         />
                         <p className="text-[11px] text-slate-400 mt-1.5 font-medium leading-snug">
-                          Tekan Selanjutnya untuk memuat riwayat nama anak
-                          (jika ada) dan menampilkan form nama pengunjung anak.
+                          {bc.phoneHelpText}
                         </p>
                       </div>
                     </>
@@ -1006,7 +1021,7 @@ export default function TiketPageClient({
                     <>
                       <div className="rounded-2xl border border-slate-100 bg-slate-50/60 px-4 py-3 text-sm">
                         <p className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-2">
-                          Data kontak
+                          {bc.contactSectionTitle}
                         </p>
                         <p className="font-medium text-[#1A2E44]">
                           {custName.trim()}
@@ -1017,12 +1032,10 @@ export default function TiketPageClient({
                       {counts.anak > 0 ? (
                         <div className="space-y-3 pt-1 border-t border-slate-100">
                           <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
-                            Nama pengunjung anak
+                            {bc.childSectionTitle}
                           </p>
                           <p className="text-[11px] text-slate-400 font-medium leading-snug -mt-1">
-                            Nama terisi otomatis dari riwayat sesuai urutan
-                            array di server (maks. sesuai jumlah tiket anak).
-                            Boleh diubah manual.
+                            {bc.childNamesHint}
                           </p>
                           {Array.from({ length: counts.anak }, (_, i) => (
                             <div key={`child-${i}`}>
@@ -1030,7 +1043,7 @@ export default function TiketPageClient({
                                 className="block text-xs font-bold text-slate-500 mb-1.5"
                                 htmlFor={`tiket-child-${i}`}
                               >
-                                Nama anak {i + 1}
+                                {`${bc.childNameLabelPrefix} ${i + 1}`}
                               </label>
                               <input
                                 id={`tiket-child-${i}`}
@@ -1046,15 +1059,14 @@ export default function TiketPageClient({
                                   });
                                 }}
                                 className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-[#1A2E44] focus:outline-none focus:ring-2 focus:ring-pink-200"
-                                placeholder={`Nama anak ${i + 1}`}
+                                placeholder={`${bc.childNamePlaceholderPrefix} ${i + 1}`}
                               />
                             </div>
                           ))}
                         </div>
                       ) : (
                         <p className="text-sm text-slate-500 font-medium pt-2">
-                          Tidak ada tiket anak pada pesanan ini. Lanjutkan
-                          dengan Booking.
+                          {bc.noChildTicketsMessage}
                         </p>
                       )}
                     </>
@@ -1084,7 +1096,7 @@ export default function TiketPageClient({
                     }
                     className="sm:flex-1 py-4 rounded-full font-black text-slate-400 border-2 border-slate-100 hover:bg-slate-50 flex items-center justify-center gap-2 disabled:opacity-50"
                   >
-                    <ChevronLeft size={20} /> Kembali
+                    <ChevronLeft size={20} /> {ba.back}
                   </button>
                   {step3Phase === "contact" ? (
                     <button
@@ -1093,7 +1105,7 @@ export default function TiketPageClient({
                       disabled={selanjutnyaBusy}
                       className="sm:flex-[2] py-4 rounded-full font-black text-white bg-[#E5007E] shadow-xl shadow-pink-200 hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                     >
-                      {selanjutnyaBusy ? "Memuat…" : "Selanjutnya"}
+                      {selanjutnyaBusy ? ba.nextLoading : ba.next}
                     </button>
                   ) : (
                     <button
@@ -1102,7 +1114,7 @@ export default function TiketPageClient({
                       disabled={checkoutLoading}
                       className="sm:flex-[2] py-4 rounded-full font-black text-white bg-[#E5007E] shadow-xl shadow-pink-200 hover:brightness-110 transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                     >
-                      {checkoutLoading ? "Memproses…" : "Booking"}
+                      {checkoutLoading ? ba.submitLoading : ba.submit}
                     </button>
                   )}
                 </div>

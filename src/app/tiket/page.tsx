@@ -5,16 +5,18 @@ import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Tiket | Pikuland",
-  description:
-    "Lihat pilihan tiket dan harga resmi Pikuland. Pesan tiket main per durasi yang Anda inginkan.",
-  openGraph: {
-    title: "Tiket | Pikuland",
-    description:
-      "Lihat pilihan tiket dan harga resmi Pikuland. Pesan tiket main per durasi yang Anda inginkan.",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const content = await fetchTicketContent();
+  const { metaTitle, metaDescription } = content.seo;
+  return {
+    title: metaTitle,
+    description: metaDescription,
+    openGraph: {
+      title: metaTitle,
+      description: metaDescription,
+    },
+  };
+}
 
 export default async function TiketPage() {
   const [ticketContent, { products, error: productsError }] = await Promise.all(

@@ -1,6 +1,6 @@
 import type { TicketContent } from "@/types/ticketContent";
 
-/** Used when API fails or fields are missing after merge. */
+/** Used when API fails or fields are missing after merge (Indonesian). */
 export const TICKET_PAGE_FALLBACK: TicketContent = {
   title: "Pilih Tiket Petualanganmu!",
   description:
@@ -53,5 +53,88 @@ export const TICKET_PAGE_FALLBACK: TicketContent = {
       buttonSubmitLabel: "Lanjut booking",
       ticketInformation: "",
     },
+  },
+  seo: {
+    metaTitle: "Tiket | Pikuland",
+    metaDescription:
+      "Lihat pilihan tiket dan harga resmi Pikuland. Pesan tiket main per durasi yang Anda inginkan.",
+  },
+  step3Intro: {
+    description:
+      "<p>Periksa ringkasan pesanan, isi data kontak dan nama pengunjung anak, lalu kirim booking Anda.</p>",
+  },
+  productCards: {
+    emptyMessage: "Belum ada tiket yang tersedia saat ini.",
+    sellingPriceLabel: "Harga jual",
+    productFallbackPrefix: "Tiket",
+  },
+  selectedTicket: {
+    caption: "Tiket terpilih",
+    loadingPriceHint: "Memuat harga tanggal pilihan…",
+    priceAdjustedHint: "Harga disesuaikan untuk tanggal ini",
+  },
+  calendar: {
+    prevMonthAria: "Bulan sebelumnya",
+    nextMonthAria: "Bulan berikutnya",
+    weekdays: {
+      sun: "Min",
+      mon: "Sen",
+      tue: "Sel",
+      wed: "Rab",
+      thu: "Kam",
+      fri: "Jum",
+      sat: "Sab",
+    },
+    holidayTooltip: "Hari khusus — harga dapat berbeda",
+    holidayLegend:
+      "<p>Tanggal ber-tanda: hari khusus (bisa hari libur nasional atau <strong>tarif berbeda</strong>). Pilih tanggal untuk melanjutkan.</p>",
+  },
+  formMessages: {
+    selectVisitDateFirst: "Pilih tanggal kunjungan terlebih dahulu.",
+    waitForPriceLoad:
+      "Tunggu sebentar hingga harga tanggal pilihan selesai dimuat.",
+    minVisitorsOne: "Jumlah pengunjung minimal 1.",
+    visitsLoadFailed: "Gagal memuat detail harga.",
+    fillContactFields: "Lengkapi nama, email, dan nomor telepon.",
+    validEmail: "Isi email yang valid.",
+    phoneMinDigits: "Nomor telepon minimal 10 digit.",
+    customerHistoryFailed: "Gagal memuat riwayat pelanggan.",
+    fillEachChildName: "Isi nama lengkap untuk setiap pengunjung anak.",
+    invalidTotal: "Total tidak valid.",
+    skuMissing: "SKU / artikel tidak tersedia.",
+    bookingNoReference:
+      "Booking tercatat, tetapi nomor referensi tidak dikembalikan. Hubungi admin jika perlu.",
+    checkoutFailed: "Checkout gagal. Coba lagi.",
+  },
+  bookingReview: {
+    datePrefix: "Tanggal:",
+    visitorsPrefix: "Pengunjung:",
+    childWord: "anak",
+    adultWord: "dewasa",
+  },
+  bookingContactForm: {
+    fullNameLabel: "Nama lengkap",
+    fullNamePlaceholder: "Nama sesuai KTP / kartu",
+    emailLabel: "Email",
+    emailPlaceholder: "nama@email.com",
+    phoneLabel: "No. telepon",
+    phonePlaceholder: "08...",
+    phoneHelpText:
+      "Tekan Selanjutnya untuk memuat riwayat nama anak (jika ada) dan menampilkan form nama pengunjung anak.",
+    contactSectionTitle: "Data kontak",
+    childSectionTitle: "Nama pengunjung anak",
+    childNamesHint:
+      "Nama terisi otomatis dari riwayat sesuai urutan array di server (maks. sesuai jumlah tiket anak). Boleh diubah manual.",
+    childNameLabelPrefix: "Nama anak",
+    childNamePlaceholderPrefix: "Nama anak",
+    noChildTicketsMessage:
+      "Tidak ada tiket anak pada pesanan ini. Lanjutkan dengan Booking.",
+  },
+  bookingActions: {
+    back: "Kembali",
+    next: "Selanjutnya",
+    nextLoading: "Memuat…",
+    submit: "Booking",
+    submitLoading: "Memproses…",
   },
 };
