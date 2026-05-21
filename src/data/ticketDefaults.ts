@@ -100,6 +100,7 @@ export const TICKET_PAGE_FALLBACK: TicketContent = {
     phoneMinDigits: "Nomor telepon minimal 10 digit.",
     customerHistoryFailed: "Gagal memuat riwayat pelanggan.",
     fillEachChildName: "Isi nama lengkap untuk setiap pengunjung anak.",
+    fillEachAdultName: "Isi nama lengkap untuk setiap pengunjung dewasa.",
     invalidTotal: "Total tidak valid.",
     skuMissing: "SKU / artikel tidak tersedia.",
     bookingNoReference:
@@ -120,7 +121,7 @@ export const TICKET_PAGE_FALLBACK: TicketContent = {
     phoneLabel: "No. telepon",
     phonePlaceholder: "08...",
     phoneHelpText:
-      "Tekan Selanjutnya untuk memuat riwayat nama anak (jika ada) dan menampilkan form nama pengunjung anak.",
+      "Tekan Selanjutnya untuk memuat riwayat nama pengunjung (jika ada) dan menampilkan form nama anak & dewasa.",
     contactSectionTitle: "Data kontak",
     childSectionTitle: "Nama pengunjung anak",
     childNamesHint:
@@ -129,6 +130,13 @@ export const TICKET_PAGE_FALLBACK: TicketContent = {
     childNamePlaceholderPrefix: "Nama anak",
     noChildTicketsMessage:
       "Tidak ada tiket anak pada pesanan ini. Lanjutkan dengan Booking.",
+    adultSectionTitle: "Nama pengunjung dewasa",
+    adultNamesHint:
+      "Nama terisi otomatis dari riwayat sesuai urutan array di server (maks. sesuai jumlah tiket dewasa). Boleh diubah manual.",
+    adultNameLabelPrefix: "Nama dewasa",
+    adultNamePlaceholderPrefix: "Nama dewasa",
+    noAdultTicketsMessage:
+      "Tidak ada tiket dewasa pada pesanan ini. Lanjutkan dengan Booking.",
   },
   bookingActions: {
     back: "Kembali",

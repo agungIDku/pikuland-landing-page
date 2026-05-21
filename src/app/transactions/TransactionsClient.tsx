@@ -31,6 +31,8 @@ type TransactionRow = {
   qty_child?: number;
   /** Dari API checkout / detail transaksi (`child_name` JSON array). */
   child_name?: string[] | string | null;
+  /** Dari API checkout / detail transaksi (`adult_name` JSON array). */
+  adult_name?: string[] | string | null;
   total_payment?: number;
   status?: string | null;
   notes?: string | null;
@@ -56,8 +58,7 @@ function extractTransactionRow(json: unknown): {
   message?: string;
 } {
   if (!isRecord(json)) return { row: null };
-  const message =
-    typeof json.message === "string" ? json.message : undefined;
+  const message = typeof json.message === "string" ? json.message : undefined;
   if (json.result === false) return { row: null, message };
 
   const d = json.data;
@@ -81,9 +82,10 @@ function looksLikeTransactionRow(x: Record<string, unknown>): boolean {
   );
 }
 
-/** Normalisasi nama anak dari respons API (array, JSON string, atau dipisah koma). */
-function childNamesFromTransactionRow(row: TransactionRow): string[] {
-  const raw = row.child_name;
+/** Normalisasi nama pengunjung dari respons API (array, JSON string, atau dipisah koma). */
+function visitorNamesFromField(
+  raw: string[] | string | null | undefined,
+): string[] {
   if (Array.isArray(raw)) {
     return raw
       .filter((x): x is string => typeof x === "string")
@@ -104,7 +106,10 @@ function childNamesFromTransactionRow(row: TransactionRow): string[] {
     } catch {
       /* bukan JSON */
     }
-    return t.split(",").map((s) => s.trim()).filter(Boolean);
+    return t
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
   }
   return [];
 }
@@ -193,6 +198,7 @@ export default function TransactionsClient() {
 
   useEffect(() => {
     if (!orderId) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setError(null);
     setRow(null);
     setLoading(true);
@@ -218,8 +224,7 @@ export default function TransactionsClient() {
           setRow(extracted);
         } else {
           setError(
-            message?.trim() ||
-              "Data transaksi tidak ditemukan dalam respons.",
+            message?.trim() || "Data transaksi tidak ditemukan dalam respons.",
           );
         }
       })
@@ -240,7 +245,10 @@ export default function TransactionsClient() {
             Transaksi
           </h1>
           <p className="mt-2 text-slate-600 text-sm leading-relaxed">
-            Tambahkan <code className="rounded bg-white/80 px-1.5 py-0.5 text-xs">order_id=…</code>{" "}
+            Tambahkan{" "}
+            <code className="rounded bg-white/80 px-1.5 py-0.5 text-xs">
+              order_id=…
+            </code>{" "}
             di URL.
           </p>
           <p className="mt-3 text-slate-500 text-xs break-all">
@@ -287,10 +295,8 @@ export default function TransactionsClient() {
               </p>
               {refNo.trim() ? (
                 <div className="mt-5 border-t border-slate-100">
-                  
                   <TsactQrCode
                     value={row.tsact_doc?.trim() || orderId.trim()}
-                    
                   />
                 </div>
               ) : null}
@@ -307,9 +313,7 @@ export default function TransactionsClient() {
               </span>
               {(statusCode != null || transactionStatus != null) && (
                 <span className="text-slate-500 text-xs">
-                  {statusCode != null && (
-                    <span>Midtrans: {statusCode} · </span>
-                  )}
+                  {statusCode != null && <span>Midtrans: {statusCode} · </span>}
                   {transactionStatus != null && (
                     <span>{transactionStatus}</span>
                   )}
@@ -329,7 +333,10 @@ export default function TransactionsClient() {
                 <div>
                   <dt className="text-slate-500 text-xs">SKU</dt>
                   <dd className="flex items-center gap-1.5 font-mono font-medium text-[#1a1a2e]">
-                    <Package className="h-3.5 w-3.5 text-slate-400" aria-hidden />
+                    <Package
+                      className="h-3.5 w-3.5 text-slate-400"
+                      aria-hidden
+                    />
                     {row.sku?.trim() || "—"}
                   </dd>
                 </div>
@@ -348,7 +355,7 @@ export default function TransactionsClient() {
                   </div>
                 </div>
                 {(() => {
-                  const names = childNamesFromTransactionRow(row);
+                  const names = visitorNamesFromField(row.child_name);
                   if (names.length === 0) return null;
                   return (
                     <div>
@@ -358,7 +365,27 @@ export default function TransactionsClient() {
                       <dd className="mt-1.5">
                         <ol className="list-decimal space-y-1 pl-4 font-medium text-[#1a1a2e] marker:text-slate-400">
                           {names.map((name, i) => (
-                            <li key={`${i}-${name}`} className="pl-1">
+                            <li key={`child-${i}-${name}`} className="pl-1">
+                              {name}
+                            </li>
+                          ))}
+                        </ol>
+                      </dd>
+                    </div>
+                  );
+                })()}
+                {(() => {
+                  const names = visitorNamesFromField(row.adult_name);
+                  if (names.length === 0) return null;
+                  return (
+                    <div>
+                      <dt className="text-slate-500 text-xs">
+                        Nama pengunjung dewasa
+                      </dt>
+                      <dd className="mt-1.5">
+                        <ol className="list-decimal space-y-1 pl-4 font-medium text-[#1a1a2e] marker:text-slate-400">
+                          {names.map((name, i) => (
+                            <li key={`adult-${i}-${name}`} className="pl-1">
                               {name}
                             </li>
                           ))}

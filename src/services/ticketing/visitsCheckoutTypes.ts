@@ -33,6 +33,7 @@ export type CheckoutData = {
 
 export type CustomersLookupData = {
   child_name?: string[];
+  adult_name?: string[];
 };
 
 export type CustomersApiResponse = {

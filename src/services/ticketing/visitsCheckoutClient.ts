@@ -47,10 +47,7 @@ export async function fetchVisitsClient(input: {
   return json.data;
 }
 
-function parseChildNamesFromCustomersJson(
-  json: CustomersApiResponse,
-): string[] {
-  const raw = json.data?.child_name;
+function parseNameArrayField(raw: unknown): string[] {
   if (!Array.isArray(raw)) return [];
   return raw
     .filter((x): x is string => typeof x === "string")
@@ -58,13 +55,24 @@ function parseChildNamesFromCustomersJson(
     .filter(Boolean);
 }
 
+function parseVisitorNamesFromCustomersJson(json: CustomersApiResponse): {
+  childNames: string[];
+  adultNames: string[];
+} {
+  return {
+    childNames: parseNameArrayField(json.data?.child_name),
+    adultNames: parseNameArrayField(json.data?.adult_name),
+  };
+}
+
 /**
- * Riwayat nama anak untuk nomor telepon (POST `/customers`).
- * HTTP 404 / `result: false` dengan `child_name: []` → array kosong (bukan throw).
+ * Riwayat nama pengunjung untuk nomor telepon (POST `/customers`).
+ * HTTP 404 / `result: false` dengan `child_name` / `adult_name: []` → array kosong (bukan throw).
  */
-export async function fetchCustomersChildNames(
-  phone: string,
-): Promise<string[]> {
+export async function fetchCustomersVisitorNames(phone: string): Promise<{
+  childNames: string[];
+  adultNames: string[];
+}> {
   const res = await fetch("/api/ticketing/customers", {
     method: "POST",
     headers: {
@@ -85,10 +93,10 @@ export async function fetchCustomersChildNames(
     if (!res.ok) {
       throw new Error(`Gagal memuat riwayat pelanggan (${res.status})`);
     }
-    return [];
+    return { childNames: [], adultNames: [] };
   }
 
-  const names = parseChildNamesFromCustomersJson(json);
+  const names = parseVisitorNamesFromCustomersJson(json);
 
   if (res.ok) {
     return names;
@@ -103,6 +111,14 @@ export async function fetchCustomersChildNames(
   );
 }
 
+/** @deprecated Gunakan {@link fetchCustomersVisitorNames}. */
+export async function fetchCustomersChildNames(
+  phone: string,
+): Promise<string[]> {
+  const { childNames } = await fetchCustomersVisitorNames(phone);
+  return childNames;
+}
+
 export async function fetchCheckoutClient(input: {
   cust_name: string;
   email: string;
@@ -114,6 +130,7 @@ export async function fetchCheckoutClient(input: {
   /** Tanggal kunjungan, format `YYYY-MM-DD` (lokal). */
   visit_date: string;
   child_name: string[];
+  adult_name: string[];
 }): Promise<CheckoutApiResponse["data"]> {
   const res = await fetch("/api/ticketing/checkout", {
     method: "POST",

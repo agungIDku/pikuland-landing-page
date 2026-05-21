@@ -12,7 +12,7 @@ import {
 } from "@/services/ticketing/products";
 import {
   fetchCheckoutClient,
-  fetchCustomersChildNames,
+  fetchCustomersVisitorNames,
   fetchVisitsClient,
   formatDateParamForVisits,
 } from "@/services/ticketing/visitsCheckoutClient";
@@ -151,7 +151,8 @@ export default function TiketPageClient({
   const [custEmail, setCustEmail] = useState("");
   const [custPhone, setCustPhone] = useState("");
   const [childNames, setChildNames] = useState<string[]>([]);
-  /** Step 3 — kontak dulu, lalu nama anak + Booking. */
+  const [adultNames, setAdultNames] = useState<string[]>([]);
+  /** Step 3 — kontak dulu, lalu nama pengunjung + Booking. */
   const [step3Phase, setStep3Phase] = useState<"contact" | "children">(
     "contact",
   );
@@ -185,6 +186,15 @@ export default function TiketPageClient({
       return next;
     });
   }, [counts.anak]);
+
+  useEffect(() => {
+    setAdultNames((prev) => {
+      const n = counts.dewasa;
+      const next = prev.slice(0, n);
+      while (next.length < n) next.push("");
+      return next;
+    });
+  }, [counts.dewasa]);
 
   /** Panggil API visits saat langkah 2: tanggal atau tiket berubah → harga di atas ter-update. */
   useEffect(() => {
@@ -333,9 +343,16 @@ export default function TiketPageClient({
     const phoneTrimmed = custPhone.trim();
     setSelanjutnyaBusy(true);
     try {
-      const names = await fetchCustomersChildNames(phoneTrimmed);
+      const { childNames: historyChild, adultNames: historyAdult } =
+        await fetchCustomersVisitorNames(phoneTrimmed);
       setChildNames(
-        Array.from({ length: n }, (_, i) => names[i]?.trim() ?? ""),
+        Array.from({ length: n }, (_, i) => historyChild[i]?.trim() ?? ""),
+      );
+      setAdultNames(
+        Array.from(
+          { length: counts.dewasa },
+          (_, i) => historyAdult[i]?.trim() ?? "",
+        ),
       );
       setStep3Phase("children");
     } catch (e) {
@@ -356,6 +373,11 @@ export default function TiketPageClient({
     const kids = childNames.slice(0, counts.anak).map((s) => s.trim());
     if (counts.anak > 0 && kids.some((name) => !name)) {
       setCheckoutError(msg.fillEachChildName);
+      return;
+    }
+    const adults = adultNames.slice(0, counts.dewasa).map((s) => s.trim());
+    if (counts.dewasa > 0 && adults.some((name) => !name)) {
+      setCheckoutError(msg.fillEachAdultName);
       return;
     }
     if (totalPembayaranRupiah < 1) {
@@ -384,6 +406,7 @@ export default function TiketPageClient({
         total_payment: String(totalPembayaranRupiah),
         visit_date: formatDateParamForVisits(selectedDate),
         child_name: kids,
+        adult_name: adults,
       });
       const ref =
         (typeof out.tsact_doc === "string" && out.tsact_doc.trim()) ||
@@ -1064,11 +1087,53 @@ export default function TiketPageClient({
                             </div>
                           ))}
                         </div>
-                      ) : (
+                      ) : counts.dewasa === 0 ? (
                         <p className="text-sm text-slate-500 font-medium pt-2">
                           {bc.noChildTicketsMessage}
                         </p>
-                      )}
+                      ) : null}
+                      {counts.dewasa > 0 ? (
+                        <div
+                          className={`space-y-3 ${counts.anak > 0 ? "pt-4 border-t border-slate-100" : "pt-1 border-t border-slate-100"}`}
+                        >
+                          <p className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                            {bc.adultSectionTitle}
+                          </p>
+                          <p className="text-[11px] text-slate-400 font-medium leading-snug -mt-1">
+                            {bc.adultNamesHint}
+                          </p>
+                          {Array.from({ length: counts.dewasa }, (_, i) => (
+                            <div key={`adult-${i}`}>
+                              <label
+                                className="block text-xs font-bold text-slate-500 mb-1.5"
+                                htmlFor={`tiket-adult-${i}`}
+                              >
+                                {`${bc.adultNameLabelPrefix} ${i + 1}`}
+                              </label>
+                              <input
+                                id={`tiket-adult-${i}`}
+                                type="text"
+                                autoComplete="name"
+                                value={adultNames[i] ?? ""}
+                                onChange={(e) => {
+                                  const v = e.target.value;
+                                  setAdultNames((prev) => {
+                                    const next = [...prev];
+                                    next[i] = v;
+                                    return next;
+                                  });
+                                }}
+                                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-[#1A2E44] focus:outline-none focus:ring-2 focus:ring-pink-200"
+                                placeholder={`${bc.adultNamePlaceholderPrefix} ${i + 1}`}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      ) : counts.anak === 0 ? (
+                        <p className="text-sm text-slate-500 font-medium pt-2">
+                          {bc.noAdultTicketsMessage}
+                        </p>
+                      ) : null}
                     </>
                   )}
                 </div>

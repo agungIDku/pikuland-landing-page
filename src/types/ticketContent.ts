@@ -91,6 +91,7 @@ export interface TicketFormMessagesContent {
   phoneMinDigits: string;
   customerHistoryFailed: string;
   fillEachChildName: string;
+  fillEachAdultName: string;
   invalidTotal: string;
   skuMissing: string;
   bookingNoReference: string;
@@ -118,6 +119,11 @@ export interface TicketBookingContactFormContent {
   childNameLabelPrefix: string;
   childNamePlaceholderPrefix: string;
   noChildTicketsMessage: string;
+  adultSectionTitle: string;
+  adultNamesHint: string;
+  adultNameLabelPrefix: string;
+  adultNamePlaceholderPrefix: string;
+  noAdultTicketsMessage: string;
 }
 
 export interface TicketBookingActionsContent {

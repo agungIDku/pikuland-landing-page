@@ -301,6 +301,11 @@ function parseFormMessages(
       lang,
       d.fillEachChildName,
     ),
+    fillEachAdultName: pickLocalized(
+      o.fillEachAdultName,
+      lang,
+      d.fillEachAdultName,
+    ),
     invalidTotal: pickLocalized(o.invalidTotal, lang, d.invalidTotal),
     skuMissing: pickLocalized(o.skuMissing, lang, d.skuMissing),
     bookingNoReference: pickLocalized(
@@ -379,6 +384,27 @@ function parseBookingContactForm(
       o.noChildTicketsMessage,
       lang,
       d.noChildTicketsMessage,
+    ),
+    adultSectionTitle: pickLocalized(
+      o.adultSectionTitle,
+      lang,
+      d.adultSectionTitle,
+    ),
+    adultNamesHint: pickLocalized(o.adultNamesHint, lang, d.adultNamesHint),
+    adultNameLabelPrefix: pickLocalized(
+      o.adultNameLabelPrefix,
+      lang,
+      d.adultNameLabelPrefix,
+    ),
+    adultNamePlaceholderPrefix: pickLocalized(
+      o.adultNamePlaceholderPrefix,
+      lang,
+      d.adultNamePlaceholderPrefix,
+    ),
+    noAdultTicketsMessage: pickLocalized(
+      o.noAdultTicketsMessage,
+      lang,
+      d.noAdultTicketsMessage,
     ),
   };
 }
