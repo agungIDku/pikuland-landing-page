@@ -9,6 +9,7 @@ export const CONTACT_PAGE_FALLBACK: ContactContent = {
     parentsNameLabel: "Nama Ayah/Bunda",
     parentsNamePlaceholder: "Contoh: Budi Santoso",
     emailLabel: "Email",
+    emailPlaceholder: "email@contoh.com",
     messageLabel: "Pesan",
     messagePlaceholder: "Tulis pertanyaan atau saran di sini...",
     submitButtonLabel: "Kirim Pesan",

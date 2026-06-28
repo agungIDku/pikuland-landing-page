@@ -15,6 +15,7 @@ type CtaBannerProps = {
 
 export default function CtaBanner({ ctaContent }: CtaBannerProps) {
   const cta = ctaContent ?? DEFAULT_CTA;
+  const ctaHref = cta.buttonHref?.trim() || "/tiket";
 
   return (
     <section className="relative py-10 md:py-16 px-4 bg-transparent overflow-hidden">
@@ -51,7 +52,7 @@ export default function CtaBanner({ ctaContent }: CtaBannerProps) {
               dangerouslySetInnerHTML={{ __html: cta.description }}
             />
             <Link
-              href="/tiket"
+              href={ctaHref}
               className="mt-8 md:mt-10 inline-flex items-center justify-center bg-white text-[#E5007E] font-extrabold text-sm md:text-lg px-8 md:px-12 py-3.5 md:py-4 rounded-full hover:scale-105 hover:bg-gray-100 transition-all shadow-xl"
             >
               {cta.button}

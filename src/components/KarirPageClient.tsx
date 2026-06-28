@@ -2,7 +2,7 @@
 
 import { CAREER_PAGE_FALLBACK } from "@/data/careerDefaults";
 import { CAREER_JOBS_FALLBACK } from "@/data/careerJobsFallback";
-import type { CareerContent } from "@/types/careerContent";
+import type { CareerContent, CareerJobCardLabels } from "@/types/careerContent";
 import type { CareerJob } from "@/types/careerJob";
 import Image from "next/image";
 import { Smile, Heart, BookOpen, ChevronDown } from "lucide-react";
@@ -52,7 +52,15 @@ function CareerHeroTitle({ title }: { title: string }) {
   );
 }
 
-function CareerJobCard({ job, defaultOpen }: { job: CareerJob; defaultOpen: boolean }) {
+function CareerJobCard({
+  job,
+  defaultOpen,
+  labels,
+}: {
+  job: CareerJob;
+  defaultOpen: boolean;
+  labels: CareerJobCardLabels;
+}) {
   const desc = job.description?.trim() ?? "";
   const html = desc && descriptionIsHtml(desc);
 
@@ -95,7 +103,7 @@ function CareerJobCard({ job, defaultOpen }: { job: CareerJob; defaultOpen: bool
 
         {job.location ? (
           <p className="text-sm text-slate-600 font-bold mb-4">
-            Lokasi:{" "}
+            {labels.location}{" "}
             <span className="font-medium text-slate-500">{job.location}</span>
           </p>
         ) : null}
@@ -103,7 +111,7 @@ function CareerJobCard({ job, defaultOpen }: { job: CareerJob; defaultOpen: bool
         {job.qualifications && job.qualifications.length > 0 ? (
           <div className="mb-6">
             <h4 className="font-black text-[#1A2E44] text-sm mb-3">
-              Kualifikasi:
+              {labels.qualifications}
             </h4>
             <ul className="space-y-2">
               {job.qualifications.map((q, i) => (
@@ -122,7 +130,7 @@ function CareerJobCard({ job, defaultOpen }: { job: CareerJob; defaultOpen: bool
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 pt-6 border-t border-slate-50">
           <div>
             <p className="text-sm font-black text-[#1A2E44]">
-              Kirim CV kamu ke :
+              {labels.sendCv}
             </p>
             <a
               href={`mailto:${job.email}`}
@@ -133,7 +141,7 @@ function CareerJobCard({ job, defaultOpen }: { job: CareerJob; defaultOpen: bool
           </div>
           {job.dueDateLabel ? (
             <p className="text-[11px] italic text-red-500 font-medium">
-              *Lowongan Berakhir {job.dueDateLabel}
+              {labels.dueDatePrefix} {job.dueDateLabel}
             </p>
           ) : null}
         </div>
@@ -242,6 +250,7 @@ export default function KarirPageClient({ content, jobs }: KarirPageClientProps)
                   key={job.id}
                   job={job}
                   defaultOpen={index === 0}
+                  labels={c.jobCard}
                 />
               ))}
             </div>

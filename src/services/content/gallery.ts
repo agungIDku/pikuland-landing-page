@@ -18,6 +18,17 @@ function str(v: unknown): string {
   return String(v).trim();
 }
 
+/** CMS may return a localized string (API flattened) or `{ id, en }`. */
+function pickStr(v: unknown, fallback: string): string {
+  if (v == null || v === "") return fallback;
+  if (typeof v === "string") return v.trim() || fallback;
+  if (typeof v === "object" && !Array.isArray(v)) {
+    const o = v as Record<string, unknown>;
+    return str(o.id) || str(o.en) || fallback;
+  }
+  return fallback;
+}
+
 function looksLikeHtml(s: string): boolean {
   return /<[^>]+>/.test(s);
 }
@@ -147,11 +158,19 @@ export function normalizeGalleryContent(
     normalizeImages(raw.images ?? raw.items ?? r.gallery) ??
     GALLERY_DEFAULT_IMAGES;
 
+  const allTabLabel = pickStr(r.allTabLabel, "Semua");
+  const emptyStateMessage = pickStr(
+    r.emptyStateMessage,
+    "Tidak ada foto untuk filter ini.",
+  );
+
   return {
     title,
     subtitle,
     subtitleHtml,
     categories,
+    allTabLabel,
+    emptyStateMessage,
     images,
   };
 }

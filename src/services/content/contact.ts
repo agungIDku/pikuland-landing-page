@@ -37,6 +37,7 @@ function parseForm(raw: unknown): ContactFormContent | undefined {
   const parentsNameLabel = str(o.parentsNameLabel);
   const parentsNamePlaceholder = str(o.parentsNamePlaceholder);
   const emailLabel = str(o.emailLabel);
+  const emailPlaceholder = str(o.emailPlaceholder);
   const messageLabel = str(o.messageLabel);
   const messagePlaceholder = str(o.messagePlaceholder);
   const submitButtonLabel = str(o.submitButtonLabel);
@@ -57,6 +58,7 @@ function parseForm(raw: unknown): ContactFormContent | undefined {
     parentsNamePlaceholder:
       parentsNamePlaceholder || "Contoh: Budi Santoso",
     emailLabel,
+    emailPlaceholder: emailPlaceholder || "email@contoh.com",
     messageLabel,
     messagePlaceholder:
       messagePlaceholder || "Tulis pertanyaan atau saran di sini...",

@@ -1,5 +1,11 @@
-import type { CareerContent, CareerValueBlock } from "@/types/careerContent";
+import type {
+  CareerContent,
+  CareerJobCardLabels,
+  CareerValueBlock,
+} from "@/types/careerContent";
 import { cache } from "react";
+
+import { CAREER_JOB_CARD_LABELS_FALLBACK } from "@/data/careerDefaults";
 
 import { getLang } from "../lang";
 import { proxyUrl } from "../proxyUrl";
@@ -29,6 +35,19 @@ function valuesFromRaw(
   const c = parseValueBlock(o.thirdValues);
   if (!a || !b || !c) return undefined;
   return [a, b, c];
+}
+
+/** Job-card labels from CMS, falling back to defaults per field. */
+function jobCardFromRaw(v: unknown): CareerJobCardLabels {
+  const o = (v && typeof v === "object" ? v : {}) as Record<string, unknown>;
+  return {
+    location: str(o.location) || CAREER_JOB_CARD_LABELS_FALLBACK.location,
+    qualifications:
+      str(o.qualifications) || CAREER_JOB_CARD_LABELS_FALLBACK.qualifications,
+    sendCv: str(o.sendCv) || CAREER_JOB_CARD_LABELS_FALLBACK.sendCv,
+    dueDatePrefix:
+      str(o.dueDatePrefix) || CAREER_JOB_CARD_LABELS_FALLBACK.dueDatePrefix,
+  };
 }
 
 /**
@@ -69,6 +88,7 @@ export function normalizeCareerContent(json: unknown): CareerContent | undefined
     openPositionLabel,
     description: descRaw,
     values,
+    jobCard: jobCardFromRaw(raw.jobCard),
   };
 }
 

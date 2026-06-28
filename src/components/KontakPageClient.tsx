@@ -142,38 +142,6 @@ export default function KontakPageClient({ content }: KontakPageClientProps) {
                   dangerouslySetInnerHTML={{ __html: c.location.address }}
                 />
               </div>
-
-              <div className="flex flex-col gap-3 lg:hidden">
-                <div className="bg-white p-4 rounded-3xl flex items-center gap-4 shadow-sm border border-slate-50">
-                  <div className="w-12 h-12 bg-[#25D366] rounded-2xl flex items-center justify-center text-white">
-                    <MessageCircle size={24} fill="currentColor" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-black text-[#1A2E44]">WhatsApp</p>
-                    <p className="text-sm text-slate-500">0812-3456-7890</p>
-                  </div>
-                </div>
-
-                <div className="bg-white p-4 rounded-3xl flex items-center gap-4 shadow-sm border border-slate-50">
-                  <div className="w-12 h-12 bg-[#039BE5] rounded-2xl flex items-center justify-center text-white">
-                    <Phone size={24} fill="currentColor" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-black text-[#1A2E44]">Telepon</p>
-                    <p className="text-sm text-slate-500">(021) 555-0123</p>
-                  </div>
-                </div>
-
-                <div className="bg-white p-4 rounded-3xl flex items-center gap-4 shadow-sm border border-slate-50">
-                  <div className="w-12 h-12 bg-[#E5007E] rounded-2xl flex items-center justify-center text-white">
-                    <Mail size={24} fill="currentColor" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-black text-[#1A2E44]">Email</p>
-                    <p className="text-sm text-slate-500">halo@pikuland.com</p>
-                  </div>
-                </div>
-              </div>
             </div>
 
             <div className="bg-[#F0F9FF] p-1.5 rounded-[3.5rem] shadow-xl shadow-blue-100/50 mt-4 lg:mt-0">
@@ -250,7 +218,7 @@ export default function KontakPageClient({ content }: KontakPageClientProps) {
                       id="contact-email"
                       type="email"
                       autoComplete="email"
-                      placeholder="email@contoh.com"
+                      placeholder={f.emailPlaceholder}
                       className={`${inputClass} ${errors.email ? "border-red-300" : ""}`}
                       {...register("email")}
                     />

@@ -4,13 +4,19 @@ import GallerySection from "@/components/GallerySection";
 import TestimonialsSection from "@/components/TestimonialsSection";
 import CtaBanner from "@/components/CtaBanner";
 import { fetchHomeContent } from "@/services/content/home";
+import { fetchRides } from "@/services/content/rides";
+import { fetchGalleries } from "@/services/content/galleries";
 import Image from "next/image";
 
 /** CMS fetch uses `cache: "no-store"` — render on each request like tasima home. */
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const home = await fetchHomeContent();
+  const [home, rides, galleryImages] = await Promise.all([
+    fetchHomeContent(),
+    fetchRides(),
+    fetchGalleries(),
+  ]);
 
   return (
     <>
@@ -35,11 +41,11 @@ export default async function Home() {
               headerContent={home?.headerContent}
               videoContent={home?.videoContent}
             />
-            <ServicesSection rideContent={home?.rideContent} />
+            <ServicesSection rideContent={home?.rideContent} rides={rides} />
           </div>
         </div>
 
-        <GallerySection galleryTitle={home?.galleryTitle} />
+        <GallerySection galleryTitle={home?.galleryTitle} images={galleryImages} />
 
         {/* GROUP 2: Testimonials & CTA (Sharing lines-3) */}
         <div className="relative bg-[#FFFBE6]">

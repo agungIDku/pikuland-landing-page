@@ -37,5 +37,7 @@ export const GALLERY_PAGE_FALLBACK: GalleryContent = {
   subtitle:
     "Intip momen-momen bahagia teman-teman kecil kita di Pikuland!",
   categories: [...GALLERY_DEFAULT_CATEGORIES],
+  allTabLabel: "Semua",
+  emptyStateMessage: "Tidak ada foto untuk filter ini.",
   images: GALLERY_DEFAULT_IMAGES,
 };

@@ -16,6 +16,10 @@ export interface GalleryContent {
   subtitleHtml?: string;
   /** Tab labels for filters; should include a catch-all like "Semua" if used. */
   categories: string[];
+  /** Label of the catch-all filter tab (e.g. "Semua" / "All"). */
+  allTabLabel: string;
+  /** Shown when the active filter has no photos. */
+  emptyStateMessage: string;
   images: GalleryImageItem[];
 }
 

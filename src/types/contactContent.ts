@@ -6,6 +6,7 @@ export interface ContactFormContent {
   parentsNameLabel: string;
   parentsNamePlaceholder: string;
   emailLabel: string;
+  emailPlaceholder: string;
   messageLabel: string;
   messagePlaceholder: string;
   submitButtonLabel: string;

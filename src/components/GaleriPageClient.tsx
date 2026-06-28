@@ -20,21 +20,28 @@ export default function GaleriPageClient({
 }: GaleriPageClientProps) {
   const content = initialContent ?? GALLERY_PAGE_FALLBACK;
   const { title, subtitle, subtitleHtml } = content;
+  const allLabel = content.allTabLabel?.trim() || "Semua";
 
   const images =
     galleryItems && galleryItems.length > 0 ? galleryItems : content.images;
 
-  const categories =
-    categoryTabs && categoryTabs.length > 0
-      ? categoryTabs
-      : content.categories;
+  // Catch-all tab uses the CMS label; drop any literal "Semua" / duplicate from
+  // either source so the configured label is always the single first tab.
+  const categories = useMemo(() => {
+    const source =
+      categoryTabs && categoryTabs.length > 0
+        ? categoryTabs
+        : content.categories;
+    const rest = source.filter((c) => c !== "Semua" && c !== allLabel);
+    return [allLabel, ...rest];
+  }, [categoryTabs, content.categories, allLabel]);
 
-  const [activeTab, setActiveTab] = useState(categories[0] ?? "Semua");
+  const [activeTab, setActiveTab] = useState(allLabel);
 
   const filteredImages = useMemo(() => {
-    if (activeTab === "Semua") return images;
+    if (activeTab === allLabel) return images;
     return images.filter((img) => (img.category ?? "") === activeTab);
-  }, [activeTab, images]);
+  }, [activeTab, images, allLabel]);
 
   const wall = useMemo(
     () => filteredImages.slice(0, 4),
@@ -120,7 +127,7 @@ export default function GaleriPageClient({
 
           {wall.length === 0 ? (
             <p className="text-center text-slate-500 font-medium py-16">
-              Tidak ada foto untuk filter ini.
+              {content.emptyStateMessage}
             </p>
           ) : wall.length === 4 ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:h-[700px]">

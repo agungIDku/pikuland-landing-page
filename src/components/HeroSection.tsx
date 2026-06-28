@@ -12,6 +12,8 @@ const DEFAULT_TITLE_AFTER = " Dimulai di Sini!";
 const DEFAULT_CTA_LABEL = "Beli Tiket Sekarang";
 const DEFAULT_CTA_HREF = "/tiket";
 const DEFAULT_VIDEO_CAPTION = "See how kids explore and learn inside Pikuland";
+const DEFAULT_BG_DESKTOP = "/assets/hero-background.png";
+const DEFAULT_BG_MOBILE = "/assets/petualangan-tak-terbatas.png";
 
 type HeroSectionProps = {
   headerContent?: HomeHeaderContent;
@@ -32,10 +34,10 @@ export default function HeroSection({
   }, []);
 
   const bgSrc = isMobile
-    ? "/assets/petualangan-tak-terbatas.png"
-    : "/assets/hero-background.png";
+    ? headerContent?.bannerImageMobileUrl || DEFAULT_BG_MOBILE
+    : headerContent?.bannerImageDesktopUrl || DEFAULT_BG_DESKTOP;
   const ctaLabel = headerContent?.button ?? DEFAULT_CTA_LABEL;
-  const ctaHref = DEFAULT_CTA_HREF;
+  const ctaHref = headerContent?.buttonHref?.trim() || DEFAULT_CTA_HREF;
 
   const titleHtml = headerContent?.title;
   const useCmsTitle = Boolean(titleHtml);

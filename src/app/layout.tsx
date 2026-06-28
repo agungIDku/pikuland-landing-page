@@ -34,6 +34,11 @@ export const metadata: Metadata = {
     type: "website",
     locale: "id_ID",
   },
+   icons: {
+    icon: "/logo-pikuland.png",
+    shortcut: "/logo-pikuland.png",
+    apple: "/logo-pikuland.png",
+  },
 };
 
 export default async function RootLayout({

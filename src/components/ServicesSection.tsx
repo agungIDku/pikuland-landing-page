@@ -1,4 +1,5 @@
 import type { HomeRideContent } from "@/types/homeContent";
+import type { RideItem } from "@/types/rideContent";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -8,39 +9,48 @@ const DEFAULT_RIDE: HomeRideContent = {
   title: "Petualangan Tanpa Batas",
 };
 
-const services = [
+/** Card accent colors cycled across rides (API doesn't supply a color). */
+const CARD_COLORS = ["#009FE3", "#E5007E", "#FFCB05", "#8E24AA"];
+
+const FALLBACK_SERVICES: RideItem[] = [
   {
+    id: "kolam-bola",
     title: "Kolam Bola",
     description: "Berenang di lautan ribuan bola warna-warni!",
     image: "/assets/kolam-bola-raksasa.png",
-    color: "#009FE3", // Biru
   },
   {
+    id: "area-profesi",
     title: "Area Profesi",
     description: "Jadilah dokter, koki, atau pemadam kebakaran.",
-    image: "/assets/gameplay-preview.png", 
-    color: "#E5007E", // Pink
+    image: "/assets/gameplay-preview.png",
   },
   {
+    id: "wall-climbing",
     title: "Wall Climbing",
     description: "Tantang keberanianmu memanjat tebing aman.",
     image: "/assets/panjat-tebing-aman.png",
-    color: "#FFCB05", // Kuning
   },
   {
+    id: "creative-studio",
     title: "Creative Studio",
     description: "Tuangkan imajinasi lewat seni dan kerajinan.",
-    image: "/assets/workshop-kerajinan.png", 
-    color: "#8E24AA", // Ungu
+    image: "/assets/workshop-kerajinan.png",
   },
 ];
 
 type ServicesSectionProps = {
   rideContent?: HomeRideContent;
+  rides?: RideItem[];
 };
 
-export default function ServicesSection({ rideContent }: ServicesSectionProps) {
+export default function ServicesSection({
+  rideContent,
+  rides,
+}: ServicesSectionProps) {
   const ride = rideContent ?? DEFAULT_RIDE;
+  const seeAllHref = rideContent?.buttonSeeAllRidesHref?.trim() || "/tiket";
+  const services = rides?.length ? rides : FALLBACK_SERVICES;
 
   return (
     <section className="relative py-16 md:py-20 px-4 bg-transparent overflow-visible">
@@ -65,9 +75,9 @@ export default function ServicesSection({ rideContent }: ServicesSectionProps) {
 
         {/* Uniform cards grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 md:gap-6">
-          {services.map((service) => (
+          {services.map((service, index) => (
             <div
-              key={service.title}
+              key={service.id}
               className="group relative rounded-[2rem] overflow-hidden flex flex-col shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 h-full min-h-[380px]"
             >
               {/* Image Container — Top Half */}
@@ -87,7 +97,7 @@ export default function ServicesSection({ rideContent }: ServicesSectionProps) {
               {/* Content Container — Bottom Half (Colored) */}
               <div 
                 className="p-6 flex-grow flex flex-col justify-start relative overflow-hidden"
-                style={{ backgroundColor: service.color }}
+                style={{ backgroundColor: CARD_COLORS[index % CARD_COLORS.length] }}
               >
                 {/* Lighter top-border effect seen in design (e.g light blue on top of blue) */}
                 <div className="absolute top-0 left-0 w-full h-2 bg-white/20"></div>
@@ -106,7 +116,7 @@ export default function ServicesSection({ rideContent }: ServicesSectionProps) {
         {/* CTA link */}
         <div className="mt-10 md:mt-12 flex justify-start lg:ml-2">
           <Link
-            href="/tiket"
+            href={seeAllHref}
             className="inline-flex items-center justify-center bg-[#009FE3] text-white font-extrabold text-sm md:text-base px-8 py-3.5 rounded-full hover:bg-[#009FE3]/90 transition-all hover:scale-105 shadow-md"
           >
             {ride.buttonSeeAllRides}

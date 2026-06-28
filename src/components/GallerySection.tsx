@@ -1,8 +1,9 @@
+import type { GalleryImageItem } from "@/types/galleryContent";
 import Image from "next/image";
 
 const DEFAULT_GALLERY_TITLE = "Lihat Keseruan Anak di Pikuland";
 
-const galleryImages = [
+const FALLBACK_IMAGES: GalleryImageItem[] = [
   { src: "/assets/petualangan-tak-terbatas.png", alt: "Anak bermain di area petualangan Pikuland" },
   { src: "/assets/kolam-bola-raksasa.png", alt: "Kolam bola warna-warni Pikuland" },
   { src: "/assets/panjat-tebing-aman.png", alt: "Wall climbing untuk anak di Pikuland" },
@@ -11,10 +12,21 @@ const galleryImages = [
 
 type GallerySectionProps = {
   galleryTitle?: string;
+  images?: GalleryImageItem[];
 };
 
-export default function GallerySection({ galleryTitle }: GallerySectionProps) {
+export default function GallerySection({
+  galleryTitle,
+  images,
+}: GallerySectionProps) {
   const title = galleryTitle ?? DEFAULT_GALLERY_TITLE;
+
+  // Bento layout needs exactly 4 slots; take the first 4 from the API and
+  // backfill from static assets so the grid never has an empty cell.
+  const galleryImages: GalleryImageItem[] = Array.from(
+    { length: 4 },
+    (_, i) => (images?.length ? images[i % images.length] : FALLBACK_IMAGES[i]),
+  );
 
   return (
     <section className="relative py-16 md:py-20 px-4 bg-[#E1F5FE] overflow-visible">
